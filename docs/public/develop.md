@@ -8,6 +8,16 @@ This guide covers setting up a local development environment for the Berry proje
 - [Docker](https://www.docker.com/) for running ChromaDB
 - [Overmind](https://github.com/DarthSim/overmind) process manager
 
+## Setup
+
+```bash
+# Install dependencies
+bun install
+
+# Build packages
+bun run build
+```
+
 ## Running the Services
 
 Berry requires two services to be running:
@@ -53,6 +63,23 @@ overmind kill
 ```
 
 ## CLI Development
+
+### Configuration
+
+Create `~/.config/berry/config.jsonc`:
+
+```jsonc
+{
+  "server": {
+    "url": "http://localhost:4114",
+    "timeout": 5000,
+  },
+  "defaults": {
+    "type": "information",
+    "createdBy": "user",
+  },
+}
+```
 
 ### Linking the CLI
 
