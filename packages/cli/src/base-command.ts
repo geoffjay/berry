@@ -9,13 +9,18 @@ export abstract class BaseCommand extends Command {
   protected config_!: BerryConfig;
   protected apiClient!: ApiClient;
 
+  /** Set to true in subclasses that don't need the API client */
+  protected skipApiClientInit = false;
+
   /**
    * Initialize the command with configuration and API client
    */
   async init(): Promise<void> {
     await super.init();
     this.config_ = loadConfig();
-    this.apiClient = new ApiClient(this.config_);
+    if (!this.skipApiClientInit) {
+      this.apiClient = new ApiClient(this.config_);
+    }
   }
 
   /**

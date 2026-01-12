@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "berry": "./bin/run.js"
+    "berry": "./bin/run.js",
+    "berry-dev": "./bin/run.js"
   },
   "main": "dist/index.js",
   "scripts": {
