@@ -1,0 +1,98 @@
+{
+  "version": "0.1.0",
+  "commands": {
+    "forget": {
+      "id": "forget",
+      "description": "Remove a memory from the database",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {
+        "id": {
+          "name": "id",
+          "description": "ID of the memory to forget",
+          "required": true
+        }
+      },
+      "flags": {}
+    },
+    "index": {
+      "id": "index",
+      "description": "Launch Berry interactive mode for memory input",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {},
+      "flags": {}
+    },
+    "recall": {
+      "id": "recall",
+      "description": "Retrieve a specific memory by ID",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {
+        "id": {
+          "name": "id",
+          "description": "ID of the memory to recall",
+          "required": true
+        }
+      },
+      "flags": {}
+    },
+    "remember": {
+      "id": "remember",
+      "description": "Add a memory to the database",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {
+        "content": {
+          "name": "content",
+          "description": "Content of the memory to store",
+          "required": false
+        }
+      },
+      "flags": {
+        "type": {
+          "char": "t",
+          "description": "Memory type (question/request/information)"
+        },
+        "tags": {
+          "description": "Comma-separated tags"
+        },
+        "by": {
+          "description": "Creator identifier"
+        }
+      }
+    },
+    "search": {
+      "id": "search",
+      "description": "Search memories using vector similarity",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {
+        "query": {
+          "name": "query",
+          "description": "Search query",
+          "required": true
+        }
+      },
+      "flags": {
+        "type": {
+          "char": "t",
+          "description": "Filter by memory type"
+        },
+        "tags": {
+          "description": "Filter by tags (comma-separated)"
+        },
+        "limit": {
+          "char": "l",
+          "description": "Maximum number of results"
+        },
+        "from": {
+          "description": "Start date filter (ISO format)"
+        },
+        "to": {
+          "description": "End date filter (ISO format)"
+        }
+      }
+    }
+  }
+}

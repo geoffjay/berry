@@ -65,24 +65,13 @@ app.route("/", memoryRoutes);
 // Server configuration
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
-// Initialize and start server
-async function main() {
-  console.log("Initializing Berry server...");
+// Initialize ChromaDB on startup
+console.log("Initializing Berry server...");
+console.log("Connecting to ChromaDB...");
 
-  try {
-    // Initialize ChromaDB connection
-    console.log("Connecting to ChromaDB...");
-    await initializeChromaDB();
+initializeChromaDB()
+  .then(() => {
     console.log("ChromaDB connection established.");
-
-    // Start the server
-    console.log(`Starting server on port ${PORT}...`);
-
-    Bun.serve({
-      port: PORT,
-      fetch: app.fetch,
-    });
-
     console.log(`Berry server is running at http://localhost:${PORT}`);
     console.log("Available endpoints:");
     console.log("  GET  /health         - Health check");
@@ -90,12 +79,14 @@ async function main() {
     console.log("  POST /v1/memory      - Create new memory");
     console.log("  DELETE /v1/memory/:id - Delete memory by ID");
     console.log("  POST /v1/search      - Search memories");
-  } catch (error) {
-    console.error("Failed to start server:", error);
+  })
+  .catch((error) => {
+    console.error("Failed to initialize ChromaDB:", error);
     process.exit(1);
-  }
-}
+  });
 
-main();
-
-export default app;
+// Export for Bun to serve
+export default {
+  port: PORT,
+  fetch: app.fetch,
+};
