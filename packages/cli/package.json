@@ -1,0 +1,35 @@
+{
+  "name": "@berry/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "berry": "./bin/run.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "bun run ./bin/run.js",
+    "build": "tsc",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "@oclif/core": "^4.2.0",
+    "jsonc-parser": "^3.3.1",
+    "ora": "^8.1.0"
+  },
+  "devDependencies": {
+    "@oclif/test": "^4.1.0",
+    "@types/bun": "latest",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.2"
+  },
+  "oclif": {
+    "bin": "berry",
+    "dirname": "berry",
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    },
+    "topicSeparator": " "
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "berry",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev:server": "bun run --filter @berry/server dev",
+    "dev:cli": "bun run --filter @berry/cli dev",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "lint": "eslint packages --ext .ts",
+    "format": "prettier --write 'packages/**/*.{ts,json}'",
+    "format:check": "prettier --check 'packages/**/*.{ts,json}'"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.2",
+    "eslint": "^9.22.0",
+    "@typescript-eslint/eslint-plugin": "^8.26.0",
+    "@typescript-eslint/parser": "^8.26.0",
+    "prettier": "^3.5.0"
+  }
+}
