@@ -93,6 +93,31 @@
           "description": "End date filter (ISO format)"
         }
       }
+    },
+    "serve": {
+      "id": "serve",
+      "description": "Start the Berry server",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {},
+      "flags": {
+        "port": {
+          "char": "p",
+          "description": "Port to listen on"
+        },
+        "foreground": {
+          "char": "f",
+          "description": "Run in foreground (default: background)"
+        }
+      }
+    },
+    "version": {
+      "id": "version",
+      "description": "Display version information",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {},
+      "flags": {}
     }
   }
 }
