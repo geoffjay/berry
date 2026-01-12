@@ -1,0 +1,8 @@
+.env
+.envrc-aliases/
+
+.claude/settings.local.json
+
+dist/
+build/
+node_modules/
