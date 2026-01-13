@@ -1,5 +1,5 @@
 > [!WARNING]
-> pre-alpha, don't use this
+> Berry is in a Beta state, it's safe to use but breaking changes are possible.
 
 # Berry
 

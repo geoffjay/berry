@@ -2,8 +2,10 @@
  * ChromaDB service for memory storage and retrieval
  */
 
-import { ChromaClient, IncludeEnum } from 'chromadb';
+import { ChromaClient, CloudClient, IncludeEnum } from 'chromadb';
 import type { Collection } from 'chromadb';
+
+type ChromaDBClient = ChromaClient | CloudClient;
 import type {
   Memory,
   MemoryType,
@@ -18,13 +20,33 @@ const COLLECTION_NAME = 'memories';
  * ChromaDB service class for managing memory collections
  */
 export class ChromaDBService {
-  private client: ChromaClient;
+  private client: ChromaDBClient;
   private collection: Collection | null = null;
 
   constructor(chromaUrl?: string) {
-    this.client = new ChromaClient({
-      path: chromaUrl || process.env.CHROMA_URL || 'http://localhost:8000',
-    });
+    const provider = process.env.CHROMA_PROVIDER || 'local';
+
+    if (provider === 'cloud') {
+      const apiKey = process.env.CHROMA_API_KEY;
+      const tenant = process.env.CHROMA_TENANT;
+      const database = process.env.CHROMA_DATABASE;
+
+      if (!apiKey || !tenant || !database) {
+        throw new Error(
+          'CHROMA_API_KEY, CHROMA_TENANT, and CHROMA_DATABASE environment variables are required for cloud provider'
+        );
+      }
+
+      this.client = new CloudClient({
+        apiKey,
+        tenant,
+        database,
+      });
+    } else {
+      this.client = new ChromaClient({
+        path: chromaUrl || process.env.CHROMA_URL || 'http://localhost:8000',
+      });
+    }
   }
 
   /**

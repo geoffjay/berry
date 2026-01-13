@@ -102,9 +102,10 @@ export default class Serve extends BaseCommand {
 
     const proc = Bun.spawn(['bun', 'run', serverPath], {
       env: { ...process.env, PORT: String(port) },
-      stdout: 'pipe',
+      stdout: 'ignore',
       stderr: 'pipe',
       stdin: 'ignore',
+      detached: true,
     });
 
     // Give the server a moment to start
@@ -117,6 +118,8 @@ export default class Serve extends BaseCommand {
         this.log(`Berry server running at http://localhost:${port}`);
         this.log(`Process ID: ${proc.pid}`);
         this.log('\nTo stop the server: kill ' + proc.pid);
+        // Allow CLI to exit while server continues running
+        proc.unref();
       } else {
         this.error('Server started but health check failed');
       }

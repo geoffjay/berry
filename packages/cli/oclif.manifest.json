@@ -23,6 +23,19 @@
       "args": {},
       "flags": {}
     },
+    "mcp": {
+      "id": "mcp",
+      "description": "Start the Berry MCP server for AI agent integration",
+      "pluginName": "@berry/cli",
+      "pluginType": "core",
+      "args": {},
+      "flags": {
+        "server-url": {
+          "char": "s",
+          "description": "Berry server URL"
+        }
+      }
+    },
     "recall": {
       "id": "recall",
       "description": "Retrieve a specific memory by ID",
