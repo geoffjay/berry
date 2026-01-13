@@ -89,6 +89,9 @@ export class ChromaDBService {
       response: chromaMetadata.response as string | undefined,
       respondedAt: chromaMetadata.respondedAt as string | undefined,
       tags: chromaMetadata.tags ? JSON.parse(chromaMetadata.tags as string) : undefined,
+      references: chromaMetadata.references
+        ? JSON.parse(chromaMetadata.references as string)
+        : undefined,
     };
   }
 
@@ -121,6 +124,10 @@ export class ChromaDBService {
       // Store tags as JSON string since ChromaDB doesn't support arrays
       chromaMetadata.tags = JSON.stringify(metadata.tags);
     }
+    if (metadata.references && metadata.references.length > 0) {
+      // Store references as JSON string since ChromaDB doesn't support arrays
+      chromaMetadata.references = JSON.stringify(metadata.references);
+    }
 
     return chromaMetadata;
   }
@@ -138,6 +145,7 @@ export class ChromaDBService {
       createdAt,
       createdBy: request.metadata?.createdBy,
       tags: request.metadata?.tags,
+      references: request.metadata?.references,
     };
 
     const chromaMetadata = this.toChromaMetadata(request.type, metadata);
@@ -305,6 +313,15 @@ export class ChromaDBService {
         const memoryTags = metadata.tags || [];
         const hasMatchingTag = request.filters.tags.some((tag) => memoryTags.includes(tag));
         if (!hasMatchingTag) {
+          continue;
+        }
+      }
+
+      // Post-filter by references if specified (matches if memory references any of the specified IDs)
+      if (request.filters?.references && request.filters.references.length > 0) {
+        const memoryRefs = metadata.references || [];
+        const hasMatchingRef = request.filters.references.some((ref) => memoryRefs.includes(ref));
+        if (!hasMatchingRef) {
           continue;
         }
       }

@@ -23,6 +23,8 @@ export interface MemoryMetadata {
   respondedAt?: string;
   /** Optional categorization tags */
   tags?: string[];
+  /** References to other memory IDs that this memory relates to */
+  references?: string[];
 }
 
 /**
@@ -48,6 +50,7 @@ export interface CreateMemoryRequest {
   metadata?: {
     createdBy?: string;
     tags?: string[];
+    references?: string[];
   };
 }
 
@@ -71,6 +74,8 @@ export interface SearchFilters {
   createdBy?: string;
   /** Filter by tags (matches if any tag is present) */
   tags?: string[];
+  /** Filter by references (matches if any reference is present) */
+  references?: string[];
   /** Filter by date range */
   dateRange?: DateRangeFilter;
 }

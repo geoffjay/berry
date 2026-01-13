@@ -69,6 +69,16 @@ function validateCreateRequest(
       }
       data.metadata.tags = meta.tags;
     }
+
+    if (meta.references !== undefined) {
+      if (!Array.isArray(meta.references) || !meta.references.every((r) => typeof r === 'string')) {
+        return {
+          valid: false,
+          error: 'metadata.references must be an array of strings',
+        };
+      }
+      data.metadata.references = meta.references;
+    }
   }
 
   return { valid: true, data };
@@ -134,6 +144,19 @@ function validateSearchRequest(
         };
       }
       data.filters.tags = filters.tags;
+    }
+
+    if (filters.references !== undefined) {
+      if (
+        !Array.isArray(filters.references) ||
+        !filters.references.every((r) => typeof r === 'string')
+      ) {
+        return {
+          valid: false,
+          error: 'filters.references must be an array of strings',
+        };
+      }
+      data.filters.references = filters.references;
     }
 
     if (filters.dateRange !== undefined) {
