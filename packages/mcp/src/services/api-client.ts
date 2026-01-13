@@ -1,3 +1,5 @@
+import { getConfig } from './config';
+
 /**
  * Memory types supported by Berry
  */
@@ -109,12 +111,14 @@ export class ApiClientError extends Error {
 }
 
 /**
- * Get configuration from environment variables
+ * Get API client configuration from the Berry config file
+ * Falls back to environment variables for backwards compatibility
  */
-function getConfig() {
+function getApiConfig() {
+  const config = getConfig();
   return {
-    serverUrl: process.env.BERRY_SERVER_URL || 'http://localhost:3000',
-    timeout: parseInt(process.env.BERRY_TIMEOUT || '5000', 10),
+    serverUrl: process.env.BERRY_SERVER_URL || config.server.url,
+    timeout: process.env.BERRY_TIMEOUT ? parseInt(process.env.BERRY_TIMEOUT, 10) : config.server.timeout,
   };
 }
 
@@ -126,7 +130,7 @@ export class ApiClient {
   private readonly timeout: number;
 
   constructor() {
-    const config = getConfig();
+    const config = getApiConfig();
     this.baseUrl = config.serverUrl.replace(/\/$/, '');
     this.timeout = config.timeout;
   }
