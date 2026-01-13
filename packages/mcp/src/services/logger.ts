@@ -29,7 +29,10 @@ export function debug(message: string, data?: unknown): void {
   const prefix = `[${timestamp}] [DEBUG]`;
 
   if (data !== undefined) {
-    console.error(`${prefix} ${message}`, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    console.error(
+      `${prefix} ${message}`,
+      typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+    );
   } else {
     console.error(`${prefix} ${message}`);
   }
@@ -45,7 +48,10 @@ export function info(message: string, data?: unknown): void {
   const prefix = `[${timestamp}] [INFO]`;
 
   if (data !== undefined) {
-    console.error(`${prefix} ${message}`, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+    console.error(
+      `${prefix} ${message}`,
+      typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+    );
   } else {
     console.error(`${prefix} ${message}`);
   }

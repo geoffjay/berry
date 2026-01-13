@@ -19,8 +19,12 @@ export default class MCP extends BaseCommand {
   static override flags = {
     'server-url': Flags.string({
       char: 's',
-      description: 'Berry server URL',
-      default: 'http://localhost:3000',
+      description: 'Berry server URL (defaults to config file value)',
+    }),
+    verbose: Flags.boolean({
+      char: 'v',
+      description: 'Enable verbose logging for debugging',
+      default: false,
     }),
   };
 
@@ -32,7 +36,9 @@ export default class MCP extends BaseCommand {
 
     try {
       const mcpPath = await this.resolveMcpPath();
-      await this.runMcpServer(mcpPath, flags['server-url']);
+      // Only pass server URL if explicitly provided via flag
+      // Otherwise let MCP server read from config file
+      await this.runMcpServer(mcpPath, flags['server-url'], flags.verbose);
     } catch (error) {
       if (error instanceof Error) {
         this.error(`Failed to start MCP server: ${error.message}`);
@@ -69,12 +75,26 @@ export default class MCP extends BaseCommand {
   /**
    * Run MCP server (always foreground for stdio transport)
    */
-  private async runMcpServer(mcpPath: string, serverUrl: string): Promise<void> {
-    const proc = Bun.spawn(['bun', 'run', mcpPath], {
-      env: {
-        ...process.env,
-        BERRY_SERVER_URL: serverUrl,
-      },
+  private async runMcpServer(
+    mcpPath: string,
+    serverUrl: string | undefined,
+    verbose: boolean
+  ): Promise<void> {
+    // Build environment - only include BERRY_SERVER_URL if explicitly provided
+    const env: Record<string, string | undefined> = { ...process.env };
+
+    if (serverUrl) {
+      env.BERRY_SERVER_URL = serverUrl;
+    }
+
+    // Build command args
+    const args = ['bun', 'run', mcpPath];
+    if (verbose) {
+      args.push('--verbose');
+    }
+
+    const proc = Bun.spawn(args, {
+      env,
       stdout: 'inherit',
       stderr: 'inherit',
       stdin: 'inherit',

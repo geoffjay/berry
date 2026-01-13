@@ -119,7 +119,9 @@ function getApiConfig() {
   const config = getConfig();
   return {
     serverUrl: process.env.BERRY_SERVER_URL || config.server.url,
-    timeout: process.env.BERRY_TIMEOUT ? parseInt(process.env.BERRY_TIMEOUT, 10) : config.server.timeout,
+    timeout: process.env.BERRY_TIMEOUT
+      ? parseInt(process.env.BERRY_TIMEOUT, 10)
+      : config.server.timeout,
   };
 }
 

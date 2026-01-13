@@ -217,7 +217,9 @@ async function main() {
       timeout: config.server.timeout,
       defaults: config.defaults,
     });
-    info(`Environment overrides: BERRY_SERVER_URL=${process.env.BERRY_SERVER_URL || '(not set)'}, BERRY_TIMEOUT=${process.env.BERRY_TIMEOUT || '(not set)'}`);
+    info(
+      `Environment overrides: BERRY_SERVER_URL=${process.env.BERRY_SERVER_URL || '(not set)'}, BERRY_TIMEOUT=${process.env.BERRY_TIMEOUT || '(not set)'}`
+    );
   }
 
   const transport = new StdioServerTransport();
