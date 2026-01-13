@@ -13,6 +13,12 @@ import {
   type SearchInput,
 } from './tools/index.js';
 import { ApiClientError } from './services/api-client.js';
+import { setVerbose, info, debug, error as logError } from './services/logger.js';
+import { getConfig, getConfigPath } from './services/config.js';
+
+// Parse command-line arguments
+const args = process.argv.slice(2);
+const verbose = args.includes('--verbose') || args.includes('-v');
 
 /**
  * Berry MCP Server
@@ -143,6 +149,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  debug(`Tool called: ${name}`, args);
+
   try {
     let result: string;
 
@@ -160,6 +168,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleSearch(args as unknown as SearchInput);
         break;
       default:
+        logError(`Unknown tool: ${name}`);
         return {
           content: [
             {
@@ -171,10 +180,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
     }
 
+    debug(`Tool ${name} completed successfully`);
     return {
       content: [{ type: 'text' as const, text: result }],
     };
   } catch (error) {
+    logError(`Tool ${name} failed`, error);
     return {
       content: [
         {
@@ -192,11 +203,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start the server
 async function main() {
+  // Initialize verbose logging if requested
+  setVerbose(verbose);
+
+  if (verbose) {
+    const config = getConfig();
+    const configPath = getConfigPath();
+
+    info('Berry MCP Server starting in verbose mode');
+    info(`Config file path: ${configPath}`);
+    info('Loaded configuration:', {
+      serverUrl: config.server.url,
+      timeout: config.server.timeout,
+      defaults: config.defaults,
+    });
+    info(`Environment overrides: BERRY_SERVER_URL=${process.env.BERRY_SERVER_URL || '(not set)'}, BERRY_TIMEOUT=${process.env.BERRY_TIMEOUT || '(not set)'}`);
+  }
+
   const transport = new StdioServerTransport();
+
+  debug('Connecting to stdio transport...');
   await server.connect(transport);
+  info('MCP server connected and ready');
 }
 
 main().catch((error) => {
-  console.error('Failed to start MCP server:', error);
+  logError('Failed to start MCP server', error);
   process.exit(1);
 });

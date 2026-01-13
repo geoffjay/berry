@@ -1,4 +1,5 @@
 import { getConfig } from './config';
+import { logRequest, logResponse, debug, error as logError } from './logger';
 
 /**
  * Memory types supported by Berry
@@ -133,6 +134,7 @@ export class ApiClient {
     const config = getApiConfig();
     this.baseUrl = config.serverUrl.replace(/\/$/, '');
     this.timeout = config.timeout;
+    debug(`ApiClient initialized with baseUrl: ${this.baseUrl}, timeout: ${this.timeout}ms`);
   }
 
   /**
@@ -247,8 +249,13 @@ export class ApiClient {
    */
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+    const method = options.method || 'GET';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    // Log the outgoing request
+    const requestBody = options.body ? JSON.parse(options.body as string) : undefined;
+    logRequest(method, url, requestBody);
 
     try {
       const response = await fetch(url, {
@@ -265,31 +272,38 @@ export class ApiClient {
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        let errorBody: unknown;
 
         try {
-          const errorBody = (await response.json()) as { message?: string };
-          if (errorBody.message) {
-            errorMessage = errorBody.message;
+          errorBody = await response.json();
+          if ((errorBody as { message?: string }).message) {
+            errorMessage = (errorBody as { message: string }).message;
           }
         } catch {
           // Ignore JSON parse errors for error response
         }
 
+        logResponse(method, url, response.status, errorBody);
+        logError(`Request failed: ${errorMessage}`);
         throw new ApiClientError(errorMessage, response.status);
       }
 
       // Handle empty responses (e.g., DELETE)
       const contentType = response.headers.get('content-type');
       if (!contentType?.includes('application/json')) {
+        logResponse(method, url, response.status, '(no body)');
         return undefined as T;
       }
 
       const text = await response.text();
       if (!text) {
+        logResponse(method, url, response.status, '(empty body)');
         return undefined as T;
       }
 
-      return JSON.parse(text) as T;
+      const responseBody = JSON.parse(text) as T;
+      logResponse(method, url, response.status, responseBody);
+      return responseBody;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -299,25 +313,23 @@ export class ApiClient {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new ApiClientError(
-            `Request timed out after ${this.timeout}ms`,
-            undefined,
-            'TIMEOUT'
-          );
+          const timeoutError = `Request timed out after ${this.timeout}ms`;
+          logError(timeoutError);
+          throw new ApiClientError(timeoutError, undefined, 'TIMEOUT');
         }
 
         // Handle network errors
         if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
-          throw new ApiClientError(
-            `Failed to connect to server at ${this.baseUrl}. Is the server running?`,
-            undefined,
-            'CONNECTION_ERROR'
-          );
+          const connectionError = `Failed to connect to server at ${this.baseUrl}. Is the server running?`;
+          logError(connectionError);
+          throw new ApiClientError(connectionError, undefined, 'CONNECTION_ERROR');
         }
 
+        logError(`Request error: ${error.message}`);
         throw new ApiClientError(error.message);
       }
 
+      logError(`Unknown error: ${String(error)}`);
       throw new ApiClientError(String(error));
     }
   }
