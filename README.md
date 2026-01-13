@@ -1,11 +1,21 @@
+> [!WARNING]
+> pre-alpha, don't use this
+
 # Berry
 
 ![Member?][logo]
 
-> [!NOTE]
-> pre-alpha, don't use this
-
 A memory storage system that exists between you and your AI tooling.
+
+## Installation
+
+For more detailed installation instructions, see the [getting started guide](docs/public/getting-started).
+
+Install Berry using the installation script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/geoffjay/berry/main/install.sh | bash
+```
 
 <!-- links -->
 
