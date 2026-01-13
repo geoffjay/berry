@@ -20,34 +20,42 @@ curl -fsSL https://bun.sh/install | bash
 
 ## Installation
 
-Install Berry using the installation script:
+### From Source
+
+Clone the repository and build:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/geoffjay/berry/main/install.sh | bash
+git clone https://github.com/geoffjay/berry.git
+cd berry
+bun install
+bun run build
 ```
 
-This script will:
-
-1. Clone the Berry repository to `~/.berry`
-2. Install dependencies
-3. Build the packages
-4. Link the `berry` command globally
-5. Create a default configuration file
-
-### Custom Installation Directory
-
-To install to a custom location, set the `BERRY_HOME` environment variable:
+Link the CLI globally:
 
 ```bash
-BERRY_HOME=/opt/berry curl -fsSL https://raw.githubusercontent.com/geoffjay/berry/main/install.sh | bash
+cd packages/cli
+bun link
 ```
 
-### Installing a Specific Version
+### Create Configuration
 
-To install a specific version or branch:
+Create the configuration directory and file:
 
 ```bash
-BERRY_VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/geoffjay/berry/main/install.sh | bash
+mkdir -p ~/.config/berry
+cat > ~/.config/berry/config.jsonc << 'EOF'
+{
+  "server": {
+    "url": "http://localhost:4114",
+    "timeout": 5000,
+  },
+  "defaults": {
+    "type": "information",
+    "createdBy": "user",
+  },
+}
+EOF
 ```
 
 ## Starting the Services
