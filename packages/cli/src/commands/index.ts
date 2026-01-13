@@ -96,10 +96,7 @@ export default class Default extends BaseCommand {
         });
       } catch (error) {
         // Handle Ctrl+C gracefully
-        if (
-          error instanceof Error &&
-          error.message.includes('User force closed')
-        ) {
+        if (error instanceof Error && error.message.includes('User force closed')) {
           this.log('');
           this.log('Goodbye!');
           break;

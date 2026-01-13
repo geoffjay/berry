@@ -5,7 +5,7 @@
 /**
  * The type of memory being stored
  */
-export type MemoryType = "question" | "request" | "information";
+export type MemoryType = 'question' | 'request' | 'information';
 
 /**
  * Metadata associated with a memory

@@ -60,11 +60,13 @@ export default class Remember extends BaseCommand {
     if (flags.type && isValidMemoryType(flags.type)) {
       memoryType = flags.type;
     } else if (flags.type) {
-      this.error(`Invalid memory type: ${flags.type}. Must be one of: question, request, information`);
+      this.error(
+        `Invalid memory type: ${flags.type}. Must be one of: question, request, information`
+      );
     } else {
       // If no type flag, prompt if running interactively (no content arg)
       if (!args.content) {
-        memoryType = await select({
+        memoryType = (await select({
           message: 'What type of memory is this?',
           choices: [
             { value: 'information', name: 'Information - A fact or piece of knowledge' },
@@ -72,7 +74,7 @@ export default class Remember extends BaseCommand {
             { value: 'request', name: 'Request - An action or task to do' },
           ],
           default: this.config_.defaults.type,
-        }) as MemoryType;
+        })) as MemoryType;
       } else {
         memoryType = this.config_.defaults.type;
       }
@@ -80,7 +82,10 @@ export default class Remember extends BaseCommand {
 
     // Parse tags
     const tags = flags.tags
-      ? flags.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+      ? flags.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean)
       : [];
 
     // Get creator

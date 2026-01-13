@@ -2,17 +2,17 @@
  * ChromaDB service for memory storage and retrieval
  */
 
-import { ChromaClient, IncludeEnum } from "chromadb";
-import type { Collection } from "chromadb";
+import { ChromaClient, IncludeEnum } from 'chromadb';
+import type { Collection } from 'chromadb';
 import type {
   Memory,
   MemoryType,
   MemoryMetadata,
   CreateMemoryRequest,
   SearchMemoriesRequest,
-} from "../types";
+} from '../types';
 
-const COLLECTION_NAME = "memories";
+const COLLECTION_NAME = 'memories';
 
 /**
  * ChromaDB service class for managing memory collections
@@ -23,7 +23,7 @@ export class ChromaDBService {
 
   constructor(chromaUrl?: string) {
     this.client = new ChromaClient({
-      path: chromaUrl || process.env.CHROMA_URL || "http://localhost:8000",
+      path: chromaUrl || process.env.CHROMA_URL || 'http://localhost:8000',
     });
   }
 
@@ -34,7 +34,7 @@ export class ChromaDBService {
     this.collection = await this.client.getOrCreateCollection({
       name: COLLECTION_NAME,
       metadata: {
-        description: "Berry memory storage collection",
+        description: 'Berry memory storage collection',
       },
     });
   }
@@ -44,9 +44,7 @@ export class ChromaDBService {
    */
   private ensureCollection(): Collection {
     if (!this.collection) {
-      throw new Error(
-        "ChromaDB collection not initialized. Call initialize() first."
-      );
+      throw new Error('ChromaDB collection not initialized. Call initialize() first.');
     }
     return this.collection;
   }
@@ -61,18 +59,14 @@ export class ChromaDBService {
   /**
    * Convert ChromaDB metadata to MemoryMetadata
    */
-  private parseMetadata(
-    chromaMetadata: Record<string, unknown>
-  ): MemoryMetadata {
+  private parseMetadata(chromaMetadata: Record<string, unknown>): MemoryMetadata {
     return {
       createdAt: chromaMetadata.createdAt as string,
       createdBy: chromaMetadata.createdBy as string | undefined,
       respondedBy: chromaMetadata.respondedBy as string | undefined,
       response: chromaMetadata.response as string | undefined,
       respondedAt: chromaMetadata.respondedAt as string | undefined,
-      tags: chromaMetadata.tags
-        ? JSON.parse(chromaMetadata.tags as string)
-        : undefined,
+      tags: chromaMetadata.tags ? JSON.parse(chromaMetadata.tags as string) : undefined,
     };
   }
 
@@ -187,9 +181,7 @@ export class ChromaDBService {
   /**
    * Build ChromaDB where clause from search filters
    */
-  private buildWhereClause(
-    request: SearchMemoriesRequest
-  ): Record<string, unknown> | undefined {
+  private buildWhereClause(request: SearchMemoriesRequest): Record<string, unknown> | undefined {
     const filters = request.filters;
     if (!filters) {
       return undefined;
@@ -289,9 +281,7 @@ export class ChromaDBService {
       // Post-filter by tags if specified
       if (request.filters?.tags && request.filters.tags.length > 0) {
         const memoryTags = metadata.tags || [];
-        const hasMatchingTag = request.filters.tags.some((tag) =>
-          memoryTags.includes(tag)
-        );
+        const hasMatchingTag = request.filters.tags.some((tag) => memoryTags.includes(tag));
         if (!hasMatchingTag) {
           continue;
         }

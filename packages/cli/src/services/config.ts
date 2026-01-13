@@ -60,9 +60,7 @@ export function loadConfig(): BerryConfig {
     });
 
     if (errors.length > 0) {
-      const errorMessages = errors
-        .map((e) => printParseErrorCode(e.error))
-        .join(', ');
+      const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(', ');
       console.warn(`Warning: Config file has parse errors: ${errorMessages}`);
       console.warn('Using default configuration.');
       return DEFAULT_CONFIG;

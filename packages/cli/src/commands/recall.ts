@@ -14,9 +14,7 @@ export default class Recall extends BaseCommand {
 
   static override description = 'Retrieve a specific memory by ID';
 
-  static override examples = [
-    '<%= config.bin %> <%= command.id %> abc123',
-  ];
+  static override examples = ['<%= config.bin %> <%= command.id %> abc123'];
 
   static override flags = {};
 

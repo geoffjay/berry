@@ -16,9 +16,7 @@ export default class Forget extends BaseCommand {
 
   static override description = 'Remove a memory from the database';
 
-  static override examples = [
-    '<%= config.bin %> <%= command.id %> abc123',
-  ];
+  static override examples = ['<%= config.bin %> <%= command.id %> abc123'];
 
   static override flags = {};
 
