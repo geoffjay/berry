@@ -63,6 +63,7 @@ When you merge the "Version Packages" PR:
 2. Detects no changesets (they were consumed)
 3. Builds the packages
 4. Publishes to npm using trusted publishing (OIDC)
+5. Creates a GitHub Release with binary tarballs for curl installation
 
 ## Manual Publishing
 
@@ -164,6 +165,27 @@ The release workflow:
 - Uses `changesets/action` to manage PRs and publishing
 - Sets `BERRY_CHANNEL=latest` for release builds
 - Uses npm trusted publishing (OIDC) for authentication
+- Creates GitHub Releases with binary tarballs after successful npm publish
+
+## Installation Methods
+
+After a release, users can install Berry via:
+
+### curl (recommended for macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/geoffjay/berry/main/install | bash
+```
+
+This downloads binaries from GitHub Releases.
+
+### npm
+
+```bash
+npm install -g @hlfbkd/berry
+```
+
+This installs from the npm registry.
 
 ## Trusted Publishing Setup
 

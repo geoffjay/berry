@@ -130,8 +130,8 @@ else
       target="$target-baseline"
     fi
 
-    # Package name format: @berry-cli-darwin-arm64
-    package_name="@berry-cli-$target"
+    # Package name format: @hlfbkd-berry-darwin-arm64
+    package_name="@hlfbkd-berry-$target"
     filename="$package_name$archive_ext"
 
     if ! command -v tar >/dev/null 2>&1; then
