@@ -1,50 +1,34 @@
-import { Args } from "@oclif/core";
-import { BaseCommand } from "../base-command.js";
+import { getApiClient, formatTags, formatDate, handleApiError } from "../utils.js"
 
 /**
- * Command to retrieve a specific memory by ID
+ * Retrieve a specific memory by ID
  */
-export default class Recall extends BaseCommand {
-  static override args = {
-    id: Args.string({
-      description: "ID of the memory to recall",
-      required: true,
-    }),
-  };
+export async function recallCommand(id: string): Promise<void> {
+  const apiClient = getApiClient()
 
-  static override description = "Retrieve a specific memory by ID";
+  try {
+    const memory = await apiClient.getMemory(id)
 
-  static override examples = ["<%= config.bin %> <%= command.id %> abc123"];
-
-  static override flags = {};
-
-  async run(): Promise<void> {
-    const { args } = await this.parse(Recall);
-
-    try {
-      const memory = await this.apiClient.getMemory(args.id);
-
-      this.log("");
-      this.log("=".repeat(60));
-      this.log("Memory Details");
-      this.log("=".repeat(60));
-      this.log("");
-      this.log(`ID:         ${memory.id}`);
-      this.log(`Type:       ${memory.type}`);
-      this.log(`Created by: ${memory.createdBy}`);
-      this.log(`Created at: ${this.formatDate(memory.createdAt)}`);
-      this.log(`Updated at: ${this.formatDate(memory.updatedAt)}`);
-      this.log(`Tags:       ${this.formatTags(memory.tags)}`);
-      this.log("");
-      this.log("-".repeat(60));
-      this.log("Content:");
-      this.log("-".repeat(60));
-      this.log("");
-      this.log(memory.content);
-      this.log("");
-      this.log("=".repeat(60));
-    } catch (error) {
-      this.handleApiError(error);
-    }
+    console.log("")
+    console.log("=".repeat(60))
+    console.log("Memory Details")
+    console.log("=".repeat(60))
+    console.log("")
+    console.log(`ID:         ${memory.id}`)
+    console.log(`Type:       ${memory.type}`)
+    console.log(`Created by: ${memory.createdBy}`)
+    console.log(`Created at: ${formatDate(memory.createdAt)}`)
+    console.log(`Updated at: ${formatDate(memory.updatedAt)}`)
+    console.log(`Tags:       ${formatTags(memory.tags)}`)
+    console.log("")
+    console.log("-".repeat(60))
+    console.log("Content:")
+    console.log("-".repeat(60))
+    console.log("")
+    console.log(memory.content)
+    console.log("")
+    console.log("=".repeat(60))
+  } catch (error) {
+    handleApiError(error)
   }
 }

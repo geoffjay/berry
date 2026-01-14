@@ -6,7 +6,7 @@
     "berry": "./bin/run.js",
     "berry-dev": "./bin/run.js"
   },
-  "main": "dist/index.js",
+  "main": "src/cli.ts",
   "scripts": {
     "dev": "bun run ./bin/run.js",
     "build": "bun run script/build.ts",
@@ -15,25 +15,15 @@
   "dependencies": {
     "@berry/script": "workspace:*",
     "@inquirer/prompts": "^7.0.0",
-    "@oclif/core": "^4.8.0",
     "@parcel/watcher": "^2.5.4",
     "jsonc-parser": "^3.3.1",
-    "ora": "^8.1.0"
+    "ora": "^8.1.0",
+    "yargs": "^18.0.0"
   },
   "devDependencies": {
-    "@oclif/test": "^4.1.0",
     "@types/bun": "latest",
     "@types/node": "^22.0.0",
-    "oclif": "^4.22.65",
+    "@types/yargs": "^17.0.35",
     "typescript": "^5.7.2"
-  },
-  "oclif": {
-    "bin": "berry",
-    "dirname": "berry",
-    "commands": {
-      "strategy": "pattern",
-      "target": "./dist/commands"
-    },
-    "topicSeparator": " "
   }
 }

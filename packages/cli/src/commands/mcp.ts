@@ -1,106 +1,85 @@
-import { Flags } from "@oclif/core";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { BaseCommand } from "../base-command.js";
+import { resolve, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+export interface McpOptions {
+  serverUrl?: string
+  verbose: boolean
+}
 
 /**
- * Command to start the Berry MCP server
+ * Start the Berry MCP server for AI agent integration
  */
-export default class MCP extends BaseCommand {
-  static override description = "Start the Berry MCP server for AI agent integration";
+export async function mcpCommand(options: McpOptions): Promise<void> {
+  try {
+    const mcpPath = await resolveMcpPath()
+    await runMcpServer(mcpPath, options.serverUrl, options.verbose)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Failed to start MCP server: ${error.message}`)
+      process.exit(1)
+    }
+    throw error
+  }
+}
 
-  static override examples = [
-    "<%= config.bin %> <%= command.id %>",
-    "<%= config.bin %> <%= command.id %> --server-url http://localhost:4114",
-  ];
+/**
+ * Resolve the path to the MCP server package
+ */
+async function resolveMcpPath(): Promise<string> {
+  // Development: sibling package (from dist/commands/)
+  const devPaths = [
+    resolve(__dirname, "../../../../mcp/src/index.ts"),
+    resolve(__dirname, "../../../../mcp/dist/index.js"),
+    // From src/commands/ during development
+    resolve(__dirname, "../../../mcp/src/index.ts"),
+    resolve(__dirname, "../../../mcp/dist/index.js"),
+    // From compiled binary (bunfs)
+    resolve(__dirname, "../../mcp/src/index.ts"),
+    resolve(__dirname, "../../mcp/dist/index.js"),
+  ]
 
-  static override flags = {
-    "server-url": Flags.string({
-      char: "s",
-      description: "Berry server URL (defaults to config file value)",
-    }),
-    verbose: Flags.boolean({
-      char: "v",
-      description: "Enable verbose logging for debugging",
-      default: false,
-    }),
-  };
-
-  // Skip API client initialization for mcp command
-  protected skipApiClientInit = true;
-
-  async run(): Promise<void> {
-    const { flags } = await this.parse(MCP);
-
-    try {
-      const mcpPath = await this.resolveMcpPath();
-      // Only pass server URL if explicitly provided via flag
-      // Otherwise let MCP server read from config file
-      await this.runMcpServer(mcpPath, flags["server-url"], flags.verbose);
-    } catch (error) {
-      if (error instanceof Error) {
-        this.error(`Failed to start MCP server: ${error.message}`);
-      }
-      throw error;
+  for (const mcpPath of devPaths) {
+    const file = Bun.file(mcpPath)
+    if (await file.exists()) {
+      return mcpPath
     }
   }
 
-  /**
-   * Resolve the path to the MCP server package
-   */
-  private async resolveMcpPath(): Promise<string> {
-    // Development: sibling package (from dist/commands/)
-    const devPaths = [
-      resolve(__dirname, "../../../../mcp/src/index.ts"),
-      resolve(__dirname, "../../../../mcp/dist/index.js"),
-      // From src/commands/ during development
-      resolve(__dirname, "../../../mcp/src/index.ts"),
-      resolve(__dirname, "../../../mcp/dist/index.js"),
-    ];
+  throw new Error(
+    "Could not find @berry/mcp. Make sure you are in the Berry workspace directory."
+  )
+}
 
-    for (const mcpPath of devPaths) {
-      const file = Bun.file(mcpPath);
-      if (await file.exists()) {
-        return mcpPath;
-      }
-    }
+/**
+ * Run MCP server (always foreground for stdio transport)
+ */
+async function runMcpServer(
+  mcpPath: string,
+  serverUrl: string | undefined,
+  verbose: boolean
+): Promise<void> {
+  // Build environment - only include BERRY_SERVER_URL if explicitly provided
+  const env: Record<string, string | undefined> = { ...process.env }
 
-    throw new Error(
-      "Could not find @berry/mcp. Make sure you are in the Berry workspace directory."
-    );
+  if (serverUrl) {
+    env.BERRY_SERVER_URL = serverUrl
   }
 
-  /**
-   * Run MCP server (always foreground for stdio transport)
-   */
-  private async runMcpServer(
-    mcpPath: string,
-    serverUrl: string | undefined,
-    verbose: boolean
-  ): Promise<void> {
-    // Build environment - only include BERRY_SERVER_URL if explicitly provided
-    const env: Record<string, string | undefined> = { ...process.env };
-
-    if (serverUrl) {
-      env.BERRY_SERVER_URL = serverUrl;
-    }
-
-    // Build command args
-    const args = ["bun", "run", mcpPath];
-    if (verbose) {
-      args.push("--verbose");
-    }
-
-    const proc = Bun.spawn(args, {
-      env,
-      stdout: "inherit",
-      stderr: "inherit",
-      stdin: "inherit",
-    });
-
-    // Wait for the process to exit
-    await proc.exited;
+  // Build command args
+  const args = ["bun", "run", mcpPath]
+  if (verbose) {
+    args.push("--verbose")
   }
+
+  const proc = Bun.spawn(args, {
+    env,
+    stdout: "inherit",
+    stderr: "inherit",
+    stdin: "inherit",
+  })
+
+  // Wait for the process to exit
+  await proc.exited
 }

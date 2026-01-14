@@ -111,7 +111,7 @@ for (const item of targets) {
       outfile: `dist/${name}/bin/berry`,
       autoloadPackageJson: true,
     },
-    entrypoints: ["./bin/run.js"],
+    entrypoints: ["./src/cli.ts"],
   })
 
   await Bun.file(`dist/${name}/package.json`).write(

@@ -1,117 +1,93 @@
-import { Args, Flags } from "@oclif/core";
-import { input, select } from "@inquirer/prompts";
-import ora from "ora";
-import { BaseCommand } from "../base-command.js";
-import { isValidMemoryType, type MemoryType } from "../services/config.js";
+import { input, select } from "@inquirer/prompts"
+import ora from "ora"
+import { getConfig, getApiClient, formatTags, formatDate, handleApiError } from "../utils.js"
+import { isValidMemoryType, type MemoryType } from "../services/config.js"
+
+export interface RememberOptions {
+  content?: string
+  type?: string
+  tags?: string
+  by?: string
+}
 
 /**
- * Command to add a memory to the database
+ * Add a memory to the database
  */
-export default class Remember extends BaseCommand {
-  static override args = {
-    content: Args.string({
-      description: "Content of the memory to store",
-      required: false,
-    }),
-  };
+export async function rememberCommand(options: RememberOptions): Promise<void> {
+  const config = getConfig()
+  const apiClient = getApiClient()
 
-  static override description = "Add a memory to the database";
+  // Get content from args or prompt
+  let content = options.content
+  if (!content) {
+    content = await input({
+      message: "What would you like to remember?",
+      validate: (value: string) => {
+        if (!value.trim()) {
+          return "Content cannot be empty"
+        }
+        return true
+      },
+    })
+  }
 
-  static override examples = [
-    '<%= config.bin %> <%= command.id %> "Remember to check the logs"',
-    '<%= config.bin %> <%= command.id %> --type question "What is the meaning of life?"',
-    '<%= config.bin %> <%= command.id %> --tags "work,important" "Finish the report"',
-    '<%= config.bin %> <%= command.id %> --by alice "Meeting notes from standup"',
-  ];
-
-  static override flags = {
-    type: Flags.string({
-      char: "t",
-      description: "Memory type (question/request/information)",
-      options: ["question", "request", "information"],
-    }),
-    tags: Flags.string({
-      description: "Comma-separated tags",
-    }),
-    by: Flags.string({
-      description: "Creator identifier",
-    }),
-  };
-
-  async run(): Promise<void> {
-    const { args, flags } = await this.parse(Remember);
-
-    // Get content from args or prompt
-    let content = args.content;
-    if (!content) {
-      content = await input({
-        message: "What would you like to remember?",
-        validate: (value: string) => {
-          if (!value.trim()) {
-            return "Content cannot be empty";
-          }
-          return true;
-        },
-      });
-    }
-
-    // Get type from flags or prompt if not provided
-    let memoryType: MemoryType;
-    if (flags.type && isValidMemoryType(flags.type)) {
-      memoryType = flags.type;
-    } else if (flags.type) {
-      this.error(
-        `Invalid memory type: ${flags.type}. Must be one of: question, request, information`
-      );
+  // Get type from flags or prompt if not provided
+  let memoryType: MemoryType
+  if (options.type && isValidMemoryType(options.type)) {
+    memoryType = options.type
+  } else if (options.type) {
+    console.error(
+      `Invalid memory type: ${options.type}. Must be one of: question, request, information`
+    )
+    process.exit(1)
+  } else {
+    // If no type flag, prompt if running interactively (no content arg)
+    if (!options.content) {
+      memoryType = (await select({
+        message: "What type of memory is this?",
+        choices: [
+          { value: "information", name: "Information - A fact or piece of knowledge" },
+          { value: "question", name: "Question - Something to ask or investigate" },
+          { value: "request", name: "Request - An action or task to do" },
+        ],
+        default: config.defaults.type,
+      })) as MemoryType
     } else {
-      // If no type flag, prompt if running interactively (no content arg)
-      if (!args.content) {
-        memoryType = (await select({
-          message: "What type of memory is this?",
-          choices: [
-            { value: "information", name: "Information - A fact or piece of knowledge" },
-            { value: "question", name: "Question - Something to ask or investigate" },
-            { value: "request", name: "Request - An action or task to do" },
-          ],
-          default: this.config_.defaults.type,
-        })) as MemoryType;
-      } else {
-        memoryType = this.config_.defaults.type;
-      }
+      memoryType = config.defaults.type
     }
+  }
 
-    // Parse tags
-    const tags = flags.tags
-      ? flags.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-      : [];
+  // Parse tags
+  const tags = options.tags
+    ? options.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : []
 
-    // Get creator
-    const createdBy = flags.by ?? this.config_.defaults.createdBy;
+  // Get creator
+  const createdBy = options.by ?? config.defaults.createdBy
 
-    // Submit the memory
-    const spinner = ora("Saving memory...").start();
+  // Submit the memory
+  const spinner = ora("Saving memory...").start()
 
-    try {
-      const memory = await this.apiClient.createMemory({
-        content: content!.trim(),
-        type: memoryType,
-        tags,
-        createdBy,
-      });
+  try {
+    const memory = await apiClient.createMemory({
+      content: content!.trim(),
+      type: memoryType,
+      tags,
+      createdBy,
+    })
 
-      spinner.succeed("Memory saved successfully!");
-      this.log("");
-      this.log(`  ID: ${memory.id}`);
-      this.log(`  Type: ${memory.type}`);
-      this.log(`  Tags: ${this.formatTags(memory.tags)}`);
-      this.log(`  Created by: ${memory.createdBy}`);
-      this.log(`  Created at: ${this.formatDate(memory.createdAt)}`);
-    } catch (error) {
-      spinner.fail("Failed to save memory");
-      this.handleApiError(error);
-    }
+    spinner.succeed("Memory saved successfully!")
+    console.log("")
+    console.log(`  ID: ${memory.id}`)
+    console.log(`  Type: ${memory.type}`)
+    console.log(`  Tags: ${formatTags(memory.tags)}`)
+    console.log(`  Created by: ${memory.createdBy}`)
+    console.log(`  Created at: ${formatDate(memory.createdAt)}`)
+  } catch (error) {
+    spinner.fail("Failed to save memory")
+    handleApiError(error)
   }
 }
