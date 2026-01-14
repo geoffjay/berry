@@ -12,5 +12,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@berry/server", "@berry/mcp", "@berry/script"]
+  "ignore": []
 }
