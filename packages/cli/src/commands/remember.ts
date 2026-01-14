@@ -1,8 +1,8 @@
-import { Args, Flags } from '@oclif/core';
-import { input, select } from '@inquirer/prompts';
-import ora from 'ora';
-import { BaseCommand } from '../base-command.js';
-import { isValidMemoryType, type MemoryType } from '../services/config.js';
+import { Args, Flags } from "@oclif/core";
+import { input, select } from "@inquirer/prompts";
+import ora from "ora";
+import { BaseCommand } from "../base-command.js";
+import { isValidMemoryType, type MemoryType } from "../services/config.js";
 
 /**
  * Command to add a memory to the database
@@ -10,12 +10,12 @@ import { isValidMemoryType, type MemoryType } from '../services/config.js';
 export default class Remember extends BaseCommand {
   static override args = {
     content: Args.string({
-      description: 'Content of the memory to store',
+      description: "Content of the memory to store",
       required: false,
     }),
   };
 
-  static override description = 'Add a memory to the database';
+  static override description = "Add a memory to the database";
 
   static override examples = [
     '<%= config.bin %> <%= command.id %> "Remember to check the logs"',
@@ -26,15 +26,15 @@ export default class Remember extends BaseCommand {
 
   static override flags = {
     type: Flags.string({
-      char: 't',
-      description: 'Memory type (question/request/information)',
-      options: ['question', 'request', 'information'],
+      char: "t",
+      description: "Memory type (question/request/information)",
+      options: ["question", "request", "information"],
     }),
     tags: Flags.string({
-      description: 'Comma-separated tags',
+      description: "Comma-separated tags",
     }),
     by: Flags.string({
-      description: 'Creator identifier',
+      description: "Creator identifier",
     }),
   };
 
@@ -45,10 +45,10 @@ export default class Remember extends BaseCommand {
     let content = args.content;
     if (!content) {
       content = await input({
-        message: 'What would you like to remember?',
+        message: "What would you like to remember?",
         validate: (value: string) => {
           if (!value.trim()) {
-            return 'Content cannot be empty';
+            return "Content cannot be empty";
           }
           return true;
         },
@@ -67,11 +67,11 @@ export default class Remember extends BaseCommand {
       // If no type flag, prompt if running interactively (no content arg)
       if (!args.content) {
         memoryType = (await select({
-          message: 'What type of memory is this?',
+          message: "What type of memory is this?",
           choices: [
-            { value: 'information', name: 'Information - A fact or piece of knowledge' },
-            { value: 'question', name: 'Question - Something to ask or investigate' },
-            { value: 'request', name: 'Request - An action or task to do' },
+            { value: "information", name: "Information - A fact or piece of knowledge" },
+            { value: "question", name: "Question - Something to ask or investigate" },
+            { value: "request", name: "Request - An action or task to do" },
           ],
           default: this.config_.defaults.type,
         })) as MemoryType;
@@ -83,7 +83,7 @@ export default class Remember extends BaseCommand {
     // Parse tags
     const tags = flags.tags
       ? flags.tags
-          .split(',')
+          .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean)
       : [];
@@ -92,7 +92,7 @@ export default class Remember extends BaseCommand {
     const createdBy = flags.by ?? this.config_.defaults.createdBy;
 
     // Submit the memory
-    const spinner = ora('Saving memory...').start();
+    const spinner = ora("Saving memory...").start();
 
     try {
       const memory = await this.apiClient.createMemory({
@@ -102,15 +102,15 @@ export default class Remember extends BaseCommand {
         createdBy,
       });
 
-      spinner.succeed('Memory saved successfully!');
-      this.log('');
+      spinner.succeed("Memory saved successfully!");
+      this.log("");
       this.log(`  ID: ${memory.id}`);
       this.log(`  Type: ${memory.type}`);
       this.log(`  Tags: ${this.formatTags(memory.tags)}`);
       this.log(`  Created by: ${memory.createdBy}`);
       this.log(`  Created at: ${this.formatDate(memory.createdAt)}`);
     } catch (error) {
-      spinner.fail('Failed to save memory');
+      spinner.fail("Failed to save memory");
       this.handleApiError(error);
     }
   }

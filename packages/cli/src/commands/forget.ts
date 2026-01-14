@@ -1,7 +1,7 @@
-import { Args } from '@oclif/core';
-import { confirm } from '@inquirer/prompts';
-import ora from 'ora';
-import { BaseCommand } from '../base-command.js';
+import { Args } from "@oclif/core";
+import { confirm } from "@inquirer/prompts";
+import ora from "ora";
+import { BaseCommand } from "../base-command.js";
 
 /**
  * Command to remove a memory by ID
@@ -9,14 +9,14 @@ import { BaseCommand } from '../base-command.js';
 export default class Forget extends BaseCommand {
   static override args = {
     id: Args.string({
-      description: 'ID of the memory to forget',
+      description: "ID of the memory to forget",
       required: true,
     }),
   };
 
-  static override description = 'Remove a memory from the database';
+  static override description = "Remove a memory from the database";
 
-  static override examples = ['<%= config.bin %> <%= command.id %> abc123'];
+  static override examples = ["<%= config.bin %> <%= command.id %> abc123"];
 
   static override flags = {};
 
@@ -36,7 +36,7 @@ export default class Forget extends BaseCommand {
     if (memoryContent) {
       this.log(`Memory to delete:`);
       this.log(`  "${this.truncate(memoryContent, 60)}"`);
-      this.log('');
+      this.log("");
     }
 
     // Prompt for confirmation
@@ -46,18 +46,18 @@ export default class Forget extends BaseCommand {
     });
 
     if (!confirmed) {
-      this.log('Deletion cancelled.');
+      this.log("Deletion cancelled.");
       return;
     }
 
     // Delete the memory
-    const spinner = ora('Forgetting memory...').start();
+    const spinner = ora("Forgetting memory...").start();
 
     try {
       await this.apiClient.deleteMemory(args.id);
-      spinner.succeed('Memory forgotten successfully.');
+      spinner.succeed("Memory forgotten successfully.");
     } catch (error) {
-      spinner.fail('Failed to forget memory');
+      spinner.fail("Failed to forget memory");
       this.handleApiError(error);
     }
   }

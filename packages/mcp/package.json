@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "bun run src/index.ts",
-    "test": "echo 'No tests yet'"
+    "test": "bun test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

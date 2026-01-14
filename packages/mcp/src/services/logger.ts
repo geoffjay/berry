@@ -31,7 +31,7 @@ export function debug(message: string, data?: unknown): void {
   if (data !== undefined) {
     console.error(
       `${prefix} ${message}`,
-      typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+      typeof data === "string" ? data : JSON.stringify(data, null, 2)
     );
   } else {
     console.error(`${prefix} ${message}`);
@@ -50,7 +50,7 @@ export function info(message: string, data?: unknown): void {
   if (data !== undefined) {
     console.error(
       `${prefix} ${message}`,
-      typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+      typeof data === "string" ? data : JSON.stringify(data, null, 2)
     );
   } else {
     console.error(`${prefix} ${message}`);

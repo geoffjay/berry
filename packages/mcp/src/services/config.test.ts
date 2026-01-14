@@ -1,36 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { isValidMemoryType, getConfigPath, type BerryConfig } from "./config.js";
+import { getConfigPath, getConfig, type BerryConfig, type MemoryType } from "./config";
 import { homedir } from "node:os";
 import { join } from "node:path";
-
-describe("isValidMemoryType", () => {
-  test("accepts 'question' as valid", () => {
-    expect(isValidMemoryType("question")).toBe(true);
-  });
-
-  test("accepts 'request' as valid", () => {
-    expect(isValidMemoryType("request")).toBe(true);
-  });
-
-  test("accepts 'information' as valid", () => {
-    expect(isValidMemoryType("information")).toBe(true);
-  });
-
-  test("rejects invalid string types", () => {
-    expect(isValidMemoryType("invalid")).toBe(false);
-    expect(isValidMemoryType("")).toBe(false);
-    expect(isValidMemoryType("QUESTION")).toBe(false);
-    expect(isValidMemoryType("Info")).toBe(false);
-  });
-
-  test("type guard narrows type correctly", () => {
-    const value: string = "information";
-    if (isValidMemoryType(value)) {
-      const memType: "question" | "request" | "information" = value;
-      expect(memType).toBe("information");
-    }
-  });
-});
 
 describe("getConfigPath", () => {
   test("returns path under .config/berry/", () => {
@@ -44,6 +15,25 @@ describe("getConfigPath", () => {
     const path = getConfigPath();
     const expectedPath = join(homedir(), ".config", "berry", "config.jsonc");
     expect(path).toBe(expectedPath);
+  });
+});
+
+describe("getConfig", () => {
+  test("returns config object", () => {
+    const config = getConfig();
+
+    expect(config).toBeDefined();
+    expect(config.server).toBeDefined();
+    expect(config.defaults).toBeDefined();
+  });
+
+  test("config has all required properties", () => {
+    const config = getConfig();
+
+    expect(config.server.url).toBeDefined();
+    expect(config.server.timeout).toBeDefined();
+    expect(config.defaults.type).toBeDefined();
+    expect(config.defaults.createdBy).toBeDefined();
   });
 });
 
@@ -65,16 +55,19 @@ describe("BerryConfig type", () => {
     expect(config.defaults.type).toBeDefined();
     expect(config.defaults.createdBy).toBeDefined();
   });
+});
 
-  test("all MemoryType values are valid", () => {
-    const types = ["question", "request", "information"] as const;
-    types.forEach((type) => {
-      expect(isValidMemoryType(type)).toBe(true);
-    });
+describe("MemoryType", () => {
+  test("all valid memory types", () => {
+    const types: MemoryType[] = ["question", "request", "information"];
+    expect(types).toHaveLength(3);
+    expect(types).toContain("question");
+    expect(types).toContain("request");
+    expect(types).toContain("information");
   });
 });
 
-describe("Config defaults documentation", () => {
+describe("Default values documentation", () => {
   test("default server URL should be localhost:3000", () => {
     const expectedDefault = "http://localhost:3000";
     expect(expectedDefault).toContain("localhost");
@@ -88,7 +81,8 @@ describe("Config defaults documentation", () => {
 
   test("default memory type should be information", () => {
     const expectedDefault = "information";
-    expect(isValidMemoryType(expectedDefault)).toBe(true);
+    const types: MemoryType[] = ["question", "request", "information"];
+    expect(types).toContain(expectedDefault);
   });
 
   test("default createdBy should be user", () => {

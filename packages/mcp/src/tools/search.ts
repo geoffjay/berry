@@ -1,4 +1,4 @@
-import { getApiClient, type MemoryType } from '../services/api-client.js';
+import { getApiClient, type MemoryType } from "../services/api-client.js";
 
 export interface SearchInput {
   query: string;

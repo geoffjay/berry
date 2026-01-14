@@ -2,8 +2,8 @@
  * ChromaDB service for memory storage and retrieval
  */
 
-import { ChromaClient, CloudClient, IncludeEnum } from 'chromadb';
-import type { Collection } from 'chromadb';
+import { ChromaClient, CloudClient, IncludeEnum } from "chromadb";
+import type { Collection } from "chromadb";
 
 type ChromaDBClient = ChromaClient | CloudClient;
 import type {
@@ -12,9 +12,9 @@ import type {
   MemoryMetadata,
   CreateMemoryRequest,
   SearchMemoriesRequest,
-} from '../types';
+} from "../types";
 
-const COLLECTION_NAME = 'memories';
+const COLLECTION_NAME = "memories";
 
 /**
  * ChromaDB service class for managing memory collections
@@ -24,16 +24,16 @@ export class ChromaDBService {
   private collection: Collection | null = null;
 
   constructor(chromaUrl?: string) {
-    const provider = process.env.CHROMA_PROVIDER || 'local';
+    const provider = process.env.CHROMA_PROVIDER || "local";
 
-    if (provider === 'cloud') {
+    if (provider === "cloud") {
       const apiKey = process.env.CHROMA_API_KEY;
       const tenant = process.env.CHROMA_TENANT;
       const database = process.env.CHROMA_DATABASE;
 
       if (!apiKey || !tenant || !database) {
         throw new Error(
-          'CHROMA_API_KEY, CHROMA_TENANT, and CHROMA_DATABASE environment variables are required for cloud provider'
+          "CHROMA_API_KEY, CHROMA_TENANT, and CHROMA_DATABASE environment variables are required for cloud provider"
         );
       }
 
@@ -44,7 +44,7 @@ export class ChromaDBService {
       });
     } else {
       this.client = new ChromaClient({
-        path: chromaUrl || process.env.CHROMA_URL || 'http://localhost:8000',
+        path: chromaUrl || process.env.CHROMA_URL || "http://localhost:8000",
       });
     }
   }
@@ -56,7 +56,7 @@ export class ChromaDBService {
     this.collection = await this.client.getOrCreateCollection({
       name: COLLECTION_NAME,
       metadata: {
-        description: 'Berry memory storage collection',
+        description: "Berry memory storage collection",
       },
     });
   }
@@ -66,7 +66,7 @@ export class ChromaDBService {
    */
   private ensureCollection(): Collection {
     if (!this.collection) {
-      throw new Error('ChromaDB collection not initialized. Call initialize() first.');
+      throw new Error("ChromaDB collection not initialized. Call initialize() first.");
     }
     return this.collection;
   }

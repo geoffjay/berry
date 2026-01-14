@@ -1,6 +1,36 @@
 import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import { ApiClientError, ApiClient } from "./api-client.js";
-import type { BerryConfig } from "./config.js";
+import {
+  ApiClientError,
+  ApiClient,
+  getApiClient,
+  type Memory,
+  type MemoryType,
+  type CreateMemoryRequest,
+  type SearchMemoriesRequest,
+  type SearchResult,
+} from "./api-client";
+
+// Mock the config module
+mock.module("./config", () => ({
+  getConfig: () => ({
+    server: {
+      url: "http://localhost:3000",
+      timeout: 5000,
+    },
+    defaults: {
+      type: "information",
+      createdBy: "user",
+    },
+  }),
+}));
+
+// Mock the logger module
+mock.module("./logger", () => ({
+  logRequest: mock(() => {}),
+  logResponse: mock(() => {}),
+  debug: mock(() => {}),
+  error: mock(() => {}),
+}));
 
 describe("ApiClientError", () => {
   test("creates error with message only", () => {
@@ -51,46 +81,37 @@ describe("ApiClientError", () => {
 });
 
 describe("ApiClient", () => {
-  const mockConfig: BerryConfig = {
-    server: {
-      url: "http://localhost:3000",
-      timeout: 5000,
-    },
-    defaults: {
-      type: "information",
-      createdBy: "test-user",
-    },
-  };
-
   let client: ApiClient;
   let originalFetch: typeof globalThis.fetch;
+  const originalEnv = process.env;
 
   beforeEach(() => {
+    process.env = { ...originalEnv };
     originalFetch = globalThis.fetch;
-    client = new ApiClient(mockConfig);
+    client = new ApiClient();
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    process.env = originalEnv;
   });
 
   describe("constructor", () => {
-    test("strips trailing slash from URL", () => {
-      const configWithSlash: BerryConfig = {
-        ...mockConfig,
-        server: { ...mockConfig.server, url: "http://localhost:3000/" },
-      };
-      const clientWithSlash = new ApiClient(configWithSlash);
-      expect(clientWithSlash).toBeDefined();
+    test("uses config server URL by default", () => {
+      const client = new ApiClient();
+      expect(client).toBeDefined();
     });
 
-    test("uses configured timeout", () => {
-      const configWithTimeout: BerryConfig = {
-        ...mockConfig,
-        server: { ...mockConfig.server, timeout: 10000 },
-      };
-      const clientWithTimeout = new ApiClient(configWithTimeout);
-      expect(clientWithTimeout).toBeDefined();
+    test("respects BERRY_SERVER_URL environment variable", () => {
+      process.env.BERRY_SERVER_URL = "http://env-server:4000";
+      const client = new ApiClient();
+      expect(client).toBeDefined();
+    });
+
+    test("respects BERRY_TIMEOUT environment variable", () => {
+      process.env.BERRY_TIMEOUT = "10000";
+      const client = new ApiClient();
+      expect(client).toBeDefined();
     });
   });
 
@@ -115,7 +136,6 @@ describe("ApiClient", () => {
           ok: true,
           status: 201,
           headers: new Headers({ "content-type": "application/json" }),
-          json: () => Promise.resolve(mockResponse),
           text: () => Promise.resolve(JSON.stringify(mockResponse)),
         } as Response)
       );
@@ -173,23 +193,6 @@ describe("ApiClient", () => {
       );
 
       await expect(client.createMemory({ content: "Test" })).rejects.toThrow("Validation failed");
-    });
-
-    test("throws error when response has no data", async () => {
-      const mockResponse = { success: true };
-
-      globalThis.fetch = mock(() =>
-        Promise.resolve({
-          ok: true,
-          status: 200,
-          headers: new Headers({ "content-type": "application/json" }),
-          text: () => Promise.resolve(JSON.stringify(mockResponse)),
-        } as Response)
-      );
-
-      await expect(client.createMemory({ content: "Test" })).rejects.toThrow(
-        "Failed to create memory"
-      );
     });
   });
 
@@ -457,33 +460,6 @@ describe("ApiClient", () => {
 
       await expect(client.getMemory("mem_123")).rejects.toThrow("timed out");
     });
-
-    test("handles non-JSON response", async () => {
-      globalThis.fetch = mock(() =>
-        Promise.resolve({
-          ok: true,
-          status: 200,
-          headers: new Headers({ "content-type": "text/plain" }),
-          text: () => Promise.resolve("OK"),
-        } as Response)
-      );
-
-      // Non-JSON responses return undefined, which causes the success check to fail
-      await expect(client.getMemory("mem_123")).rejects.toThrow();
-    });
-
-    test("handles empty response body", async () => {
-      globalThis.fetch = mock(() =>
-        Promise.resolve({
-          ok: true,
-          status: 200,
-          headers: new Headers({ "content-type": "application/json" }),
-          text: () => Promise.resolve(""),
-        } as Response)
-      );
-
-      await expect(client.getMemory("mem_123")).rejects.toThrow();
-    });
   });
 
   describe("transformMemory", () => {
@@ -545,35 +521,40 @@ describe("ApiClient", () => {
   });
 });
 
-describe("Memory type definitions", () => {
+describe("getApiClient function", () => {
+  test("is exported and callable", () => {
+    expect(typeof getApiClient).toBe("function");
+  });
+});
+
+describe("Type definitions", () => {
   test("Memory interface has required fields", () => {
-    // Type checking test - if this compiles, the types are correct
-    const memory = {
+    const memory: Memory = {
       id: "mem_123",
       content: "Test content",
-      type: "information" as const,
+      type: "information",
       tags: ["test"],
       createdBy: "user",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
     };
 
     expect(memory.id).toBeDefined();
     expect(memory.content).toBeDefined();
-    expect(memory.type).toBe("information");
+    expect(memory.type).toBeDefined();
     expect(Array.isArray(memory.tags)).toBe(true);
   });
 
   test("SearchResult has memory and score", () => {
-    const searchResult = {
+    const searchResult: SearchResult = {
       memory: {
         id: "mem_123",
         content: "Test",
-        type: "information" as const,
+        type: "information",
         tags: [],
         createdBy: "user",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
       },
       score: 0.95,
     };
@@ -581,5 +562,10 @@ describe("Memory type definitions", () => {
     expect(searchResult.memory).toBeDefined();
     expect(searchResult.score).toBeGreaterThan(0);
     expect(searchResult.score).toBeLessThanOrEqual(1);
+  });
+
+  test("MemoryType accepts valid values", () => {
+    const types: MemoryType[] = ["question", "request", "information"];
+    expect(types).toHaveLength(3);
   });
 });

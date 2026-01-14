@@ -1,7 +1,7 @@
-import { Flags } from '@oclif/core';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { BaseCommand } from '../base-command.js';
+import { Flags } from "@oclif/core";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { BaseCommand } from "../base-command.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -9,23 +9,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * Command to start the Berry server
  */
 export default class Serve extends BaseCommand {
-  static override description = 'Start the Berry server';
+  static override description = "Start the Berry server";
 
   static override examples = [
-    '<%= config.bin %> <%= command.id %>',
-    '<%= config.bin %> <%= command.id %> --port 4114',
-    '<%= config.bin %> <%= command.id %> --foreground',
+    "<%= config.bin %> <%= command.id %>",
+    "<%= config.bin %> <%= command.id %> --port 4114",
+    "<%= config.bin %> <%= command.id %> --foreground",
   ];
 
   static override flags = {
     port: Flags.integer({
-      char: 'p',
-      description: 'Port to listen on',
+      char: "p",
+      description: "Port to listen on",
       default: 4114,
     }),
     foreground: Flags.boolean({
-      char: 'f',
-      description: 'Run in foreground (default: background)',
+      char: "f",
+      description: "Run in foreground (default: background)",
       default: false,
     }),
   };
@@ -58,11 +58,11 @@ export default class Serve extends BaseCommand {
   private async resolveServerPath(): Promise<string> {
     // Development: sibling package (from dist/commands/)
     const devPaths = [
-      resolve(__dirname, '../../../../server/src/index.ts'),
-      resolve(__dirname, '../../../../server/dist/index.js'),
+      resolve(__dirname, "../../../../server/src/index.ts"),
+      resolve(__dirname, "../../../../server/dist/index.js"),
       // From src/commands/ during development
-      resolve(__dirname, '../../../server/src/index.ts'),
-      resolve(__dirname, '../../../server/dist/index.js'),
+      resolve(__dirname, "../../../server/src/index.ts"),
+      resolve(__dirname, "../../../server/dist/index.js"),
     ];
 
     for (const serverPath of devPaths) {
@@ -73,7 +73,7 @@ export default class Serve extends BaseCommand {
     }
 
     throw new Error(
-      'Could not find @berry/server. Make sure you are in the Berry workspace directory.'
+      "Could not find @berry/server. Make sure you are in the Berry workspace directory."
     );
   }
 
@@ -83,11 +83,11 @@ export default class Serve extends BaseCommand {
   private async runForeground(serverPath: string, port: number): Promise<void> {
     this.log(`Starting Berry server on port ${port}...`);
 
-    const proc = Bun.spawn(['bun', 'run', serverPath], {
+    const proc = Bun.spawn(["bun", "run", serverPath], {
       env: { ...process.env, PORT: String(port) },
-      stdout: 'inherit',
-      stderr: 'inherit',
-      stdin: 'inherit',
+      stdout: "inherit",
+      stderr: "inherit",
+      stdin: "inherit",
     });
 
     // Wait for the process
@@ -100,11 +100,11 @@ export default class Serve extends BaseCommand {
   private async runBackground(serverPath: string, port: number): Promise<void> {
     this.log(`Starting Berry server in background on port ${port}...`);
 
-    const proc = Bun.spawn(['bun', 'run', serverPath], {
+    const proc = Bun.spawn(["bun", "run", serverPath], {
       env: { ...process.env, PORT: String(port) },
-      stdout: 'ignore',
-      stderr: 'pipe',
-      stdin: 'ignore',
+      stdout: "ignore",
+      stderr: "pipe",
+      stdin: "ignore",
       detached: true,
     });
 
@@ -117,11 +117,11 @@ export default class Serve extends BaseCommand {
       if (response.ok) {
         this.log(`Berry server running at http://localhost:${port}`);
         this.log(`Process ID: ${proc.pid}`);
-        this.log('\nTo stop the server: kill ' + proc.pid);
+        this.log("\nTo stop the server: kill " + proc.pid);
         // Allow CLI to exit while server continues running
         proc.unref();
       } else {
-        this.error('Server started but health check failed');
+        this.error("Server started but health check failed");
       }
     } catch {
       // Read any error output
@@ -129,7 +129,7 @@ export default class Serve extends BaseCommand {
       if (stderr) {
         this.error(`Server failed to start: ${stderr}`);
       } else {
-        this.error('Server failed to start. Check if ChromaDB is running.');
+        this.error("Server failed to start. Check if ChromaDB is running.");
       }
     }
   }

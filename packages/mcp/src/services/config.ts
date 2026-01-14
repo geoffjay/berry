@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
-import { parse, ParseError, printParseErrorCode } from 'jsonc-parser';
+import { readFileSync, existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { parse, ParseError, printParseErrorCode } from "jsonc-parser";
 
 /**
  * Configuration schema for Berry
@@ -18,19 +18,19 @@ export interface BerryConfig {
   };
 }
 
-export type MemoryType = 'question' | 'request' | 'information';
+export type MemoryType = "question" | "request" | "information";
 
 /**
  * Default configuration values
  */
 const DEFAULT_CONFIG: BerryConfig = {
   server: {
-    url: 'http://localhost:3000',
+    url: "http://localhost:3000",
     timeout: 5000,
   },
   defaults: {
-    type: 'information',
-    createdBy: 'user',
+    type: "information",
+    createdBy: "user",
   },
 };
 
@@ -38,7 +38,7 @@ const DEFAULT_CONFIG: BerryConfig = {
  * Get the path to the config file
  */
 export function getConfigPath(): string {
-  return join(homedir(), '.config', 'berry', 'config.jsonc');
+  return join(homedir(), ".config", "berry", "config.jsonc");
 }
 
 /**
@@ -53,7 +53,7 @@ export function loadConfig(): BerryConfig {
   }
 
   try {
-    const content = readFileSync(configPath, 'utf-8');
+    const content = readFileSync(configPath, "utf-8");
     const errors: ParseError[] = [];
     const parsed = parse(content, errors, {
       allowTrailingComma: true,
@@ -61,9 +61,9 @@ export function loadConfig(): BerryConfig {
     });
 
     if (errors.length > 0) {
-      const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(', ');
+      const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(", ");
       console.error(`Warning: Config file has parse errors: ${errorMessages}`);
-      console.error('Using default configuration.');
+      console.error("Using default configuration.");
       return DEFAULT_CONFIG;
     }
 
@@ -72,7 +72,7 @@ export function loadConfig(): BerryConfig {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Warning: Failed to load config: ${message}`);
-    console.error('Using default configuration.');
+    console.error("Using default configuration.");
     return DEFAULT_CONFIG;
   }
 }

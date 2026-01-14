@@ -1,10 +1,10 @@
-import { getConfig } from './config';
-import { logRequest, logResponse, debug, error as logError } from './logger';
+import { getConfig } from "./config";
+import { logRequest, logResponse, debug, error as logError } from "./logger";
 
 /**
  * Memory types supported by Berry
  */
-export type MemoryType = 'question' | 'request' | 'information';
+export type MemoryType = "question" | "request" | "information";
 
 /**
  * Server memory metadata format
@@ -107,7 +107,7 @@ export class ApiClientError extends Error {
     public readonly code?: string
   ) {
     super(message);
-    this.name = 'ApiClientError';
+    this.name = "ApiClientError";
   }
 }
 
@@ -134,7 +134,7 @@ export class ApiClient {
 
   constructor() {
     const config = getApiConfig();
-    this.baseUrl = config.serverUrl.replace(/\/$/, '');
+    this.baseUrl = config.serverUrl.replace(/\/$/, "");
     this.timeout = config.timeout;
     debug(`ApiClient initialized with baseUrl: ${this.baseUrl}, timeout: ${this.timeout}ms`);
   }
@@ -145,20 +145,20 @@ export class ApiClient {
   async createMemory(request: CreateMemoryRequest): Promise<Memory> {
     const body = {
       content: request.content,
-      type: request.type || 'information',
+      type: request.type || "information",
       metadata: {
         createdBy: request.createdBy,
         tags: request.tags,
       },
     };
 
-    const response = await this.request<ApiResponse<ServerMemory>>('/v1/memory', {
-      method: 'POST',
+    const response = await this.request<ApiResponse<ServerMemory>>("/v1/memory", {
+      method: "POST",
       body: JSON.stringify(body),
     });
 
     if (!response.success || !response.data) {
-      throw new ApiClientError(response.error || 'Failed to create memory');
+      throw new ApiClientError(response.error || "Failed to create memory");
     }
 
     return this.transformMemory(response.data);
@@ -173,7 +173,7 @@ export class ApiClient {
     );
 
     if (!response.success || !response.data) {
-      throw new ApiClientError(response.error || 'Memory not found', 404);
+      throw new ApiClientError(response.error || "Memory not found", 404);
     }
 
     return this.transformMemory(response.data);
@@ -185,11 +185,11 @@ export class ApiClient {
   async deleteMemory(id: string): Promise<void> {
     const response = await this.request<ApiResponse<{ id: string }>>(
       `/v1/memory/${encodeURIComponent(id)}`,
-      { method: 'DELETE' }
+      { method: "DELETE" }
     );
 
     if (!response.success) {
-      throw new ApiClientError(response.error || 'Failed to delete memory');
+      throw new ApiClientError(response.error || "Failed to delete memory");
     }
   }
 
@@ -216,13 +216,13 @@ export class ApiClient {
       };
     }
 
-    const response = await this.request<ApiResponse<ServerMemory[]>>('/v1/search', {
-      method: 'POST',
+    const response = await this.request<ApiResponse<ServerMemory[]>>("/v1/search", {
+      method: "POST",
       body: JSON.stringify(body),
     });
 
     if (!response.success || !response.data) {
-      throw new ApiClientError(response.error || 'Search failed');
+      throw new ApiClientError(response.error || "Search failed");
     }
 
     return response.data.map((memory, index) => ({
@@ -240,7 +240,7 @@ export class ApiClient {
       content: serverMemory.content,
       type: serverMemory.type,
       tags: serverMemory.metadata.tags || [],
-      createdBy: serverMemory.metadata.createdBy || 'unknown',
+      createdBy: serverMemory.metadata.createdBy || "unknown",
       createdAt: serverMemory.metadata.createdAt,
       updatedAt: serverMemory.metadata.respondedAt || serverMemory.metadata.createdAt,
     };
@@ -251,7 +251,7 @@ export class ApiClient {
    */
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-    const method = options.method || 'GET';
+    const method = options.method || "GET";
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -263,8 +263,8 @@ export class ApiClient {
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
           ...options.headers,
         },
         signal: controller.signal,
@@ -291,15 +291,15 @@ export class ApiClient {
       }
 
       // Handle empty responses (e.g., DELETE)
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        logResponse(method, url, response.status, '(no body)');
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        logResponse(method, url, response.status, "(no body)");
         return undefined as T;
       }
 
       const text = await response.text();
       if (!text) {
-        logResponse(method, url, response.status, '(empty body)');
+        logResponse(method, url, response.status, "(empty body)");
         return undefined as T;
       }
 
@@ -314,17 +314,17 @@ export class ApiClient {
       }
 
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+        if (error.name === "AbortError") {
           const timeoutError = `Request timed out after ${this.timeout}ms`;
           logError(timeoutError);
-          throw new ApiClientError(timeoutError, undefined, 'TIMEOUT');
+          throw new ApiClientError(timeoutError, undefined, "TIMEOUT");
         }
 
         // Handle network errors
-        if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
+        if (error.message.includes("fetch failed") || error.message.includes("ECONNREFUSED")) {
           const connectionError = `Failed to connect to server at ${this.baseUrl}. Is the server running?`;
           logError(connectionError);
-          throw new ApiClientError(connectionError, undefined, 'CONNECTION_ERROR');
+          throw new ApiClientError(connectionError, undefined, "CONNECTION_ERROR");
         }
 
         logError(`Request error: ${error.message}`);

@@ -1,4 +1,4 @@
-import type { BerryConfig, MemoryType } from './config.js';
+import type { BerryConfig, MemoryType } from "./config.js";
 
 /**
  * Server memory metadata format
@@ -109,7 +109,7 @@ export class ApiClientError extends Error {
     public readonly code?: string
   ) {
     super(message);
-    this.name = 'ApiClientError';
+    this.name = "ApiClientError";
   }
 }
 
@@ -121,7 +121,7 @@ export class ApiClient {
   private readonly timeout: number;
 
   constructor(config: BerryConfig) {
-    this.baseUrl = config.server.url.replace(/\/$/, '');
+    this.baseUrl = config.server.url.replace(/\/$/, "");
     this.timeout = config.server.timeout;
   }
 
@@ -131,20 +131,20 @@ export class ApiClient {
   async createMemory(request: CreateMemoryRequest): Promise<Memory> {
     const body = {
       content: request.content,
-      type: request.type || 'information',
+      type: request.type || "information",
       metadata: {
         createdBy: request.createdBy,
         tags: request.tags,
       },
     };
 
-    const response = await this.request<ApiResponse<ServerMemory>>('/v1/memory', {
-      method: 'POST',
+    const response = await this.request<ApiResponse<ServerMemory>>("/v1/memory", {
+      method: "POST",
       body: JSON.stringify(body),
     });
 
     if (!response.success || !response.data) {
-      throw new ApiClientError(response.error || 'Failed to create memory');
+      throw new ApiClientError(response.error || "Failed to create memory");
     }
 
     return this.transformMemory(response.data);
@@ -159,7 +159,7 @@ export class ApiClient {
     );
 
     if (!response.success || !response.data) {
-      throw new ApiClientError(response.error || 'Memory not found', 404);
+      throw new ApiClientError(response.error || "Memory not found", 404);
     }
 
     return this.transformMemory(response.data);
@@ -171,11 +171,11 @@ export class ApiClient {
   async deleteMemory(id: string): Promise<void> {
     const response = await this.request<ApiResponse<{ id: string }>>(
       `/v1/memory/${encodeURIComponent(id)}`,
-      { method: 'DELETE' }
+      { method: "DELETE" }
     );
 
     if (!response.success) {
-      throw new ApiClientError(response.error || 'Failed to delete memory');
+      throw new ApiClientError(response.error || "Failed to delete memory");
     }
   }
 
@@ -202,13 +202,13 @@ export class ApiClient {
       };
     }
 
-    const response = await this.request<ApiResponse<ServerMemory[]>>('/v1/search', {
-      method: 'POST',
+    const response = await this.request<ApiResponse<ServerMemory[]>>("/v1/search", {
+      method: "POST",
       body: JSON.stringify(body),
     });
 
     if (!response.success || !response.data) {
-      throw new ApiClientError(response.error || 'Search failed');
+      throw new ApiClientError(response.error || "Search failed");
     }
 
     return response.data.map((memory, index) => ({
@@ -226,7 +226,7 @@ export class ApiClient {
       content: serverMemory.content,
       type: serverMemory.type,
       tags: serverMemory.metadata.tags || [],
-      createdBy: serverMemory.metadata.createdBy || 'unknown',
+      createdBy: serverMemory.metadata.createdBy || "unknown",
       createdAt: serverMemory.metadata.createdAt,
       updatedAt: serverMemory.metadata.respondedAt || serverMemory.metadata.createdAt,
     };
@@ -244,8 +244,8 @@ export class ApiClient {
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
           ...options.headers,
         },
         signal: controller.signal,
@@ -271,8 +271,8 @@ export class ApiClient {
       }
 
       // Handle empty responses (e.g., DELETE)
-      const contentType = response.headers.get('content-type');
-      if (!contentType?.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
         return undefined as T;
       }
 
@@ -290,20 +290,20 @@ export class ApiClient {
       }
 
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+        if (error.name === "AbortError") {
           throw new ApiClientError(
             `Request timed out after ${this.timeout}ms`,
             undefined,
-            'TIMEOUT'
+            "TIMEOUT"
           );
         }
 
         // Handle network errors
-        if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
+        if (error.message.includes("fetch failed") || error.message.includes("ECONNREFUSED")) {
           throw new ApiClientError(
             `Failed to connect to server at ${this.baseUrl}. Is the server running?`,
             undefined,
-            'CONNECTION_ERROR'
+            "CONNECTION_ERROR"
           );
         }
 

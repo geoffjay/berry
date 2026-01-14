@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
-import { parse, ParseError, printParseErrorCode } from 'jsonc-parser';
+import { readFileSync, existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { parse, ParseError, printParseErrorCode } from "jsonc-parser";
 
 /**
  * Configuration schema for the Berry CLI
@@ -17,19 +17,19 @@ export interface BerryConfig {
   };
 }
 
-export type MemoryType = 'question' | 'request' | 'information';
+export type MemoryType = "question" | "request" | "information";
 
 /**
  * Default configuration values
  */
 const DEFAULT_CONFIG: BerryConfig = {
   server: {
-    url: 'http://localhost:3000',
+    url: "http://localhost:3000",
     timeout: 5000,
   },
   defaults: {
-    type: 'information',
-    createdBy: 'user',
+    type: "information",
+    createdBy: "user",
   },
 };
 
@@ -37,7 +37,7 @@ const DEFAULT_CONFIG: BerryConfig = {
  * Get the path to the config file
  */
 export function getConfigPath(): string {
-  return join(homedir(), '.config', 'berry', 'config.jsonc');
+  return join(homedir(), ".config", "berry", "config.jsonc");
 }
 
 /**
@@ -52,7 +52,7 @@ export function loadConfig(): BerryConfig {
   }
 
   try {
-    const content = readFileSync(configPath, 'utf-8');
+    const content = readFileSync(configPath, "utf-8");
     const errors: ParseError[] = [];
     const parsed = parse(content, errors, {
       allowTrailingComma: true,
@@ -60,9 +60,9 @@ export function loadConfig(): BerryConfig {
     });
 
     if (errors.length > 0) {
-      const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(', ');
+      const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(", ");
       console.warn(`Warning: Config file has parse errors: ${errorMessages}`);
-      console.warn('Using default configuration.');
+      console.warn("Using default configuration.");
       return DEFAULT_CONFIG;
     }
 
@@ -71,7 +71,7 @@ export function loadConfig(): BerryConfig {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`Warning: Failed to load config: ${message}`);
-    console.warn('Using default configuration.');
+    console.warn("Using default configuration.");
     return DEFAULT_CONFIG;
   }
 }
@@ -96,5 +96,5 @@ function mergeConfig(defaults: BerryConfig, overrides: Partial<BerryConfig>): Be
  * Validate that a string is a valid memory type
  */
 export function isValidMemoryType(value: string): value is MemoryType {
-  return ['question', 'request', 'information'].includes(value);
+  return ["question", "request", "information"].includes(value);
 }

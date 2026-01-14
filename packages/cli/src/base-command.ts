@@ -1,6 +1,6 @@
-import { Command } from '@oclif/core';
-import { loadConfig, type BerryConfig } from './services/config.js';
-import { ApiClient, ApiClientError } from './services/api-client.js';
+import { Command } from "@oclif/core";
+import { loadConfig, type BerryConfig } from "./services/config.js";
+import { ApiClient, ApiClientError } from "./services/api-client.js";
 
 /**
  * Base command class with shared functionality for all Berry CLI commands
@@ -28,14 +28,14 @@ export abstract class BaseCommand extends Command {
    */
   protected handleApiError(error: unknown): never {
     if (error instanceof ApiClientError) {
-      if (error.code === 'CONNECTION_ERROR') {
+      if (error.code === "CONNECTION_ERROR") {
         this.error(error.message, { exit: 1 });
       }
-      if (error.code === 'TIMEOUT') {
+      if (error.code === "TIMEOUT") {
         this.error(error.message, { exit: 1 });
       }
       if (error.statusCode === 404) {
-        this.error('Resource not found', { exit: 1 });
+        this.error("Resource not found", { exit: 1 });
       }
       this.error(error.message, { exit: 1 });
     }
@@ -60,9 +60,9 @@ export abstract class BaseCommand extends Command {
    */
   protected formatTags(tags: string[]): string {
     if (tags.length === 0) {
-      return '(none)';
+      return "(none)";
     }
-    return tags.map((tag) => `#${tag}`).join(' ');
+    return tags.map((tag) => `#${tag}`).join(" ");
   }
 
   /**
@@ -72,6 +72,6 @@ export abstract class BaseCommand extends Command {
     if (text.length <= maxLength) {
       return text;
     }
-    return text.slice(0, maxLength - 3) + '...';
+    return text.slice(0, maxLength - 3) + "...";
   }
 }
