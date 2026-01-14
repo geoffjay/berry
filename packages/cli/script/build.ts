@@ -108,6 +108,9 @@ for (const item of targets) {
   await Bun.build({
     tsconfig: "./tsconfig.json",
     minify: true,
+    define: {
+      "process.env.BERRY_VERSION": JSON.stringify(Script.version),
+    },
     compile: {
       target: name.replace(mainPackageName, "bun") as any,
       outfile: `dist/${name}/bin/berry`,
