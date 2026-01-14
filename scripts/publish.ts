@@ -12,8 +12,26 @@
  */
 
 import { $ } from "bun";
-import { readdir, stat } from "fs/promises";
+import { readdir, stat, writeFile } from "fs/promises";
+import { homedir } from "os";
 import path from "path";
+
+// Configure npm auth if NPM_TOKEN is set
+const npmToken = process.env.NPM_TOKEN;
+if (npmToken) {
+  const npmrcPath = path.join(homedir(), ".npmrc");
+  const authLine = `//registry.npmjs.org/:_authToken=${npmToken}`;
+
+  // Read existing .npmrc and replace/add auth token
+  const existingContent = await Bun.file(npmrcPath).text().catch(() => "");
+  const lines = existingContent.split("\n").filter((line) => {
+    // Remove any existing registry auth lines
+    return !line.includes("registry.npmjs.org/:_authToken");
+  });
+  lines.push(authLine);
+  await writeFile(npmrcPath, lines.filter(Boolean).join("\n") + "\n");
+  console.log("Configured npm authentication from NPM_TOKEN\n");
+}
 
 const distDir = path.resolve(import.meta.dir, "../packages/cli/dist");
 const scopeDir = path.join(distDir, "@hlfbkd");
