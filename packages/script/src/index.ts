@@ -32,17 +32,10 @@ const VERSION = await (async () => {
   if (env.BERRY_VERSION) return env.BERRY_VERSION;
   if (IS_PREVIEW)
     return `0.0.0-${CHANNEL}-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}`;
-  const version = await fetch("https://registry.npmjs.org/berry/latest")
-    .then((res) => {
-      if (!res.ok) throw new Error(res.statusText);
-      return res.json();
-    })
-    .then((data: any) => data.version);
-  const [major, minor, patch] = version.split(".").map((x: string) => Number(x) || 0);
-  const t = env.BERRY_BUMP?.toLowerCase();
-  if (t === "major") return `${major + 1}.0.0`;
-  if (t === "minor") return `${major}.${minor + 1}.0`;
-  return `${major}.${minor}.${patch + 1}`;
+  // For release builds, read version from packages/cli/package.json (managed by changesets)
+  const cliPkgPath = path.resolve(import.meta.dir, "../../cli/package.json");
+  const cliPkg = await Bun.file(cliPkgPath).json();
+  return cliPkg.version;
 })();
 
 export const Script = {

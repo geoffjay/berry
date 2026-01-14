@@ -7,10 +7,10 @@
     }
   ],
   "commit": false,
-  "fixed": [["@berry/cli", "@berry/server", "@berry/mcp", "@berry/script"]],
+  "fixed": [],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": ["@berry/server", "@berry/mcp", "@berry/script"]
 }
