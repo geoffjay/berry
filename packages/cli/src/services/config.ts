@@ -35,9 +35,12 @@ const DEFAULT_CONFIG: BerryConfig = {
 
 /**
  * Get the path to the config file
+ * Respects XDG_CONFIG_HOME if set, otherwise uses ~/.config
  */
 export function getConfigPath(): string {
-  return join(homedir(), ".config", "berry", "config.jsonc");
+  const xdgConfigHome = process.env.XDG_CONFIG_HOME;
+  const configBase = xdgConfigHome || join(homedir(), ".config");
+  return join(configBase, "berry", "config.jsonc");
 }
 
 /**

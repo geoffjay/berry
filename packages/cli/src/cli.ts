@@ -8,6 +8,7 @@ import { forgetCommand } from "./commands/forget.js";
 import { searchCommand } from "./commands/search.js";
 import { serveCommand } from "./commands/serve.js";
 import { mcpCommand } from "./commands/mcp.js";
+import { initCommand } from "./commands/init.js";
 import { interactiveCommand } from "./commands/index.js";
 
 const VERSION = process.env.BERRY_VERSION || "0.1.0";
@@ -173,7 +174,16 @@ await yargs(hideBin(process.argv))
       });
     }
   )
+  .command(
+    "init",
+    "Initialize Berry configuration",
+    () => {},
+    async () => {
+      await initCommand();
+    }
+  )
   .example("berry", "Start interactive mode")
+  .example("berry init", "Create default configuration")
   .example('berry remember "Buy milk"', "Quick add a memory")
   .example('berry search "meeting notes"', "Search memories")
   .example("berry serve --foreground", "Start server in foreground")
