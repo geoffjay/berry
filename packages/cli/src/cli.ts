@@ -1,16 +1,16 @@
 #!/usr/bin/env bun
-import yargs from "yargs"
-import { hideBin } from "yargs/helpers"
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
-import { rememberCommand } from "./commands/remember.js"
-import { recallCommand } from "./commands/recall.js"
-import { forgetCommand } from "./commands/forget.js"
-import { searchCommand } from "./commands/search.js"
-import { serveCommand } from "./commands/serve.js"
-import { mcpCommand } from "./commands/mcp.js"
-import { interactiveCommand } from "./commands/index.js"
+import { rememberCommand } from "./commands/remember.js";
+import { recallCommand } from "./commands/recall.js";
+import { forgetCommand } from "./commands/forget.js";
+import { searchCommand } from "./commands/search.js";
+import { serveCommand } from "./commands/serve.js";
+import { mcpCommand } from "./commands/mcp.js";
+import { interactiveCommand } from "./commands/index.js";
 
-const VERSION = process.env.BERRY_VERSION || "0.1.0"
+const VERSION = process.env.BERRY_VERSION || "0.1.0";
 
 await yargs(hideBin(process.argv))
   .scriptName("berry")
@@ -20,7 +20,7 @@ await yargs(hideBin(process.argv))
     "Launch Berry interactive mode for memory input",
     () => {},
     async () => {
-      await interactiveCommand()
+      await interactiveCommand();
     }
   )
   .command(
@@ -52,7 +52,7 @@ await yargs(hideBin(process.argv))
         type: argv.type,
         tags: argv.tags,
         by: argv.by,
-      })
+      });
     }
   )
   .command(
@@ -65,7 +65,7 @@ await yargs(hideBin(process.argv))
         demandOption: true,
       }),
     async (argv) => {
-      await recallCommand(argv.id!)
+      await recallCommand(argv.id!);
     }
   )
   .command(
@@ -78,7 +78,7 @@ await yargs(hideBin(process.argv))
         demandOption: true,
       }),
     async (argv) => {
-      await forgetCommand(argv.id!)
+      await forgetCommand(argv.id!);
     }
   )
   .command(
@@ -123,7 +123,7 @@ await yargs(hideBin(process.argv))
         limit: argv.limit,
         from: argv.from,
         to: argv.to,
-      })
+      });
     }
   )
   .command(
@@ -147,7 +147,7 @@ await yargs(hideBin(process.argv))
       await serveCommand({
         port: argv.port,
         foreground: argv.foreground,
-      })
+      });
     }
   )
   .command(
@@ -170,7 +170,7 @@ await yargs(hideBin(process.argv))
       await mcpCommand({
         serverUrl: argv["server-url"],
         verbose: argv.verbose,
-      })
+      });
     }
   )
   .example("berry", "Start interactive mode")
@@ -180,4 +180,4 @@ await yargs(hideBin(process.argv))
   .strict()
   .help()
   .alias("h", "help")
-  .parse()
+  .parse();

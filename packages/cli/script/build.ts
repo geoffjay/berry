@@ -1,28 +1,28 @@
 #!/usr/bin/env bun
 
-import path from "path"
-import { $ } from "bun"
-import { fileURLToPath } from "url"
-import { Script } from "@berry/script"
+import path from "path";
+import { $ } from "bun";
+import { fileURLToPath } from "url";
+import { Script } from "@berry/script";
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const dir = path.resolve(__dirname, "..")
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dir = path.resolve(__dirname, "..");
 
-process.chdir(dir)
+process.chdir(dir);
 
-import pkg from "../package.json"
-import rootPkg from "../../../package.json"
+import pkg from "../package.json";
+import rootPkg from "../../../package.json";
 
-const singleFlag = process.argv.includes("--single")
-const baselineFlag = process.argv.includes("--baseline")
-const skipInstall = process.argv.includes("--skip-install")
+const singleFlag = process.argv.includes("--single");
+const baselineFlag = process.argv.includes("--baseline");
+const skipInstall = process.argv.includes("--skip-install");
 
 const allTargets: {
-  os: string
-  arch: "arm64" | "x64"
-  abi?: "musl"
-  avx2?: false
+  os: string;
+  arch: "arm64" | "x64";
+  abi?: "musl";
+  avx2?: false;
 }[] = [
   {
     os: "linux",
@@ -66,29 +66,29 @@ const allTargets: {
     arch: "x64",
     avx2: false,
   },
-]
+];
 
 const targets = singleFlag
   ? allTargets.filter((item) => {
       if (item.os !== process.platform || item.arch !== process.arch) {
-        return false
+        return false;
       }
 
       // When building for the current platform, prefer a single native binary by default.
       // Baseline binaries require additional Bun artifacts and can be flaky to download.
       if (item.avx2 === false) {
-        return baselineFlag
+        return baselineFlag;
       }
 
-      return true
+      return true;
     })
-  : allTargets
+  : allTargets;
 
-await $`rm -rf dist`
+await $`rm -rf dist`;
 
-const binaries: Record<string, string> = {}
+const binaries: Record<string, string> = {};
 if (!skipInstall) {
-  await $`bun install --os="*" --cpu="*" @parcel/watcher@${rootPkg.dependencies["@parcel/watcher"]}`
+  await $`bun install --os="*" --cpu="*" @parcel/watcher@${rootPkg.dependencies["@parcel/watcher"]}`;
 }
 for (const item of targets) {
   const name = [
@@ -99,20 +99,20 @@ for (const item of targets) {
     item.abi === undefined ? undefined : item.abi,
   ]
     .filter(Boolean)
-    .join("-")
-  console.log(`building ${name}`)
-  await $`mkdir -p dist/${name}/bin`
+    .join("-");
+  console.log(`building ${name}`);
+  await $`mkdir -p dist/${name}/bin`;
 
   await Bun.build({
     tsconfig: "./tsconfig.json",
-    sourcemap: "external",
+    minify: true,
     compile: {
       target: name.replace(pkg.name, "bun") as any,
       outfile: `dist/${name}/bin/berry`,
       autoloadPackageJson: true,
     },
     entrypoints: ["./src/cli.ts"],
-  })
+  });
 
   await Bun.file(`dist/${name}/package.json`).write(
     JSON.stringify(
@@ -123,10 +123,10 @@ for (const item of targets) {
         cpu: [item.arch],
       },
       null,
-      2,
-    ),
-  )
-  binaries[name] = Script.version
+      2
+    )
+  );
+  binaries[name] = Script.version;
 }
 
-export { binaries }
+export { binaries };

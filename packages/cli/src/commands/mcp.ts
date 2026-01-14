@@ -1,11 +1,11 @@
-import { resolve, dirname } from "node:path"
-import { fileURLToPath } from "node:url"
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export interface McpOptions {
-  serverUrl?: string
-  verbose: boolean
+  serverUrl?: string;
+  verbose: boolean;
 }
 
 /**
@@ -13,14 +13,14 @@ export interface McpOptions {
  */
 export async function mcpCommand(options: McpOptions): Promise<void> {
   try {
-    const mcpPath = await resolveMcpPath()
-    await runMcpServer(mcpPath, options.serverUrl, options.verbose)
+    const mcpPath = await resolveMcpPath();
+    await runMcpServer(mcpPath, options.serverUrl, options.verbose);
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`Failed to start MCP server: ${error.message}`)
-      process.exit(1)
+      console.error(`Failed to start MCP server: ${error.message}`);
+      process.exit(1);
     }
-    throw error
+    throw error;
   }
 }
 
@@ -38,18 +38,16 @@ async function resolveMcpPath(): Promise<string> {
     // From compiled binary (bunfs)
     resolve(__dirname, "../../mcp/src/index.ts"),
     resolve(__dirname, "../../mcp/dist/index.js"),
-  ]
+  ];
 
   for (const mcpPath of devPaths) {
-    const file = Bun.file(mcpPath)
+    const file = Bun.file(mcpPath);
     if (await file.exists()) {
-      return mcpPath
+      return mcpPath;
     }
   }
 
-  throw new Error(
-    "Could not find @berry/mcp. Make sure you are in the Berry workspace directory."
-  )
+  throw new Error("Could not find @berry/mcp. Make sure you are in the Berry workspace directory.");
 }
 
 /**
@@ -61,16 +59,16 @@ async function runMcpServer(
   verbose: boolean
 ): Promise<void> {
   // Build environment - only include BERRY_SERVER_URL if explicitly provided
-  const env: Record<string, string | undefined> = { ...process.env }
+  const env: Record<string, string | undefined> = { ...process.env };
 
   if (serverUrl) {
-    env.BERRY_SERVER_URL = serverUrl
+    env.BERRY_SERVER_URL = serverUrl;
   }
 
   // Build command args
-  const args = ["bun", "run", mcpPath]
+  const args = ["bun", "run", mcpPath];
   if (verbose) {
-    args.push("--verbose")
+    args.push("--verbose");
   }
 
   const proc = Bun.spawn(args, {
@@ -78,8 +76,8 @@ async function runMcpServer(
     stdout: "inherit",
     stderr: "inherit",
     stdin: "inherit",
-  })
+  });
 
   // Wait for the process to exit
-  await proc.exited
+  await proc.exited;
 }

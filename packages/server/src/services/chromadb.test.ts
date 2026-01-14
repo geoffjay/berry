@@ -25,8 +25,18 @@ const mockCollection = {
       documents: [["content 1", "content 2"]],
       metadatas: [
         [
-          { type: "information", createdAt: "2024-01-01T00:00:00.000Z" },
-          { type: "question", createdAt: "2024-01-02T00:00:00.000Z" },
+          {
+            type: "information",
+            createdAt: "2024-01-01T00:00:00.000Z",
+            createdBy: "user",
+            tags: "[]",
+          },
+          {
+            type: "question",
+            createdAt: "2024-01-02T00:00:00.000Z",
+            createdBy: "user",
+            tags: "[]",
+          },
         ],
       ],
     })
@@ -210,6 +220,7 @@ describe("ChromaDBService", () => {
             {
               type: "information",
               createdAt: "2024-01-01T00:00:00.000Z",
+              createdBy: "user",
               tags: '["tag1","tag2"]',
               references: '["ref1"]',
             },
@@ -298,8 +309,13 @@ describe("ChromaDBService", () => {
           documents: [["content 1", "content 2"]],
           metadatas: [
             [
-              { type: "information", createdAt: "2024-01-01", tags: '["work"]' },
-              { type: "information", createdAt: "2024-01-02", tags: '["personal"]' },
+              { type: "information", createdAt: "2024-01-01", createdBy: "user", tags: '["work"]' },
+              {
+                type: "information",
+                createdAt: "2024-01-02",
+                createdBy: "user",
+                tags: '["personal"]',
+              },
             ],
           ],
         })
@@ -321,8 +337,20 @@ describe("ChromaDBService", () => {
           documents: [["content 1", "content 2"]],
           metadatas: [
             [
-              { type: "information", createdAt: "2024-01-01", references: '["ref_1"]' },
-              { type: "information", createdAt: "2024-01-02", references: '["ref_2"]' },
+              {
+                type: "information",
+                createdAt: "2024-01-01",
+                createdBy: "user",
+                tags: "[]",
+                references: '["ref_1"]',
+              },
+              {
+                type: "information",
+                createdAt: "2024-01-02",
+                createdBy: "user",
+                tags: "[]",
+                references: '["ref_2"]',
+              },
             ],
           ],
         })
@@ -341,7 +369,9 @@ describe("ChromaDBService", () => {
         Promise.resolve({
           ids: ["mem_1"],
           documents: ["content"],
-          metadatas: [{ type: "information", createdAt: "2024-01-01" }],
+          metadatas: [
+            { type: "information", createdAt: "2024-01-01", createdBy: "user", tags: "[]" },
+          ],
         })
       );
 
@@ -355,8 +385,8 @@ describe("ChromaDBService", () => {
     test("applies default limit of 10", async () => {
       await service.searchMemories({ query: "test" });
 
-      const call = mockCollection.query.mock.calls[0][0];
-      expect(call.nResults).toBe(10);
+      const calls = mockCollection.query.mock.calls as unknown as Array<[{ nResults?: number }]>;
+      expect(calls[0]?.[0]?.nResults).toBe(10);
     });
   });
 
@@ -390,12 +420,14 @@ describe("Metadata serialization", () => {
       Promise.resolve({
         ids: ["mem_123"],
         documents: ["test"],
-        metadatas: [{ type: "information", createdAt: "2024-01-01" }],
+        metadatas: [
+          { type: "information", createdAt: "2024-01-01", createdBy: "user", tags: "[]" },
+        ],
       })
     );
 
     const memory = await service.getMemory("mem_123");
-    expect(memory?.metadata.tags).toBeUndefined();
+    expect(memory?.metadata.tags).toEqual([]);
     expect(memory?.metadata.references).toBeUndefined();
   });
 
