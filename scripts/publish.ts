@@ -6,18 +6,14 @@
  * This script publishes the built packages from the dist/ folder to npm.
  * It's designed to be called after `bun run build` has created the dist packages.
  *
- * Usage:
- *   bun run scripts/publish.ts              # CI mode (uses NPM_TOKEN)
- *   bun run scripts/publish.ts --otp=123456 # Manual mode with 2FA
+ * Authentication:
+ *   - CI: Uses NPM_TOKEN environment variable or OIDC trusted publishing
+ *   - Local: Run `npm login` first, or set NPM_TOKEN
  */
 
 import { $ } from "bun";
 import { readdir, stat } from "fs/promises";
 import path from "path";
-
-// Parse --otp argument
-const otpArg = process.argv.find((arg) => arg.startsWith("--otp="));
-const otp = otpArg?.split("=")[1];
 
 const distDir = path.resolve(import.meta.dir, "../packages/cli/dist");
 const scopeDir = path.join(distDir, "@hlfbkd");
@@ -50,8 +46,10 @@ for (const pkgName of packageDirs) {
   console.log(`Publishing ${pkgName}...`);
 
   try {
-    const otpFlag = otp ? `--otp=${otp}` : "";
-    await $`npm publish ${pkgDir} --access public ${otpFlag}`.quiet();
+    // Use --provenance in CI for OIDC trusted publishing
+    const isCI = process.env.CI === "true";
+    const provenanceFlag = isCI ? "--provenance" : "";
+    await $`npm publish ${pkgDir} --access public ${provenanceFlag}`.quiet();
     console.log(`  ✓ Published ${pkgName}`);
   } catch (error: any) {
     // Check if it's a "already exists" error (which is fine for re-runs)
