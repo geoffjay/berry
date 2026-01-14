@@ -24,35 +24,35 @@ const allTargets: {
   abi?: "musl";
   avx2?: false;
 }[] = [
-  {
-    os: "linux",
-    arch: "arm64",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-    avx2: false,
-  },
-  {
-    os: "linux",
-    arch: "arm64",
-    abi: "musl",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-    abi: "musl",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-    abi: "musl",
-    avx2: false,
-  },
+  // {
+  //   os: "linux",
+  //   arch: "arm64",
+  // },
+  // {
+  //   os: "linux",
+  //   arch: "x64",
+  // },
+  // {
+  //   os: "linux",
+  //   arch: "x64",
+  //   avx2: false,
+  // },
+  // {
+  //   os: "linux",
+  //   arch: "arm64",
+  //   abi: "musl",
+  // },
+  // {
+  //   os: "linux",
+  //   arch: "x64",
+  //   abi: "musl",
+  // },
+  // {
+  //   os: "linux",
+  //   arch: "x64",
+  //   abi: "musl",
+  //   avx2: false,
+  // },
   {
     os: "darwin",
     arch: "arm64",
@@ -127,6 +127,11 @@ for (const item of targets) {
     )
   );
   binaries[name] = Script.version;
+
+  // Create release archive (replace / with - for GitHub release filename compatibility)
+  const archiveName = name.replace("/", "-");
+  console.log(`packaging ${archiveName}.tar.gz`);
+  await $`tar -czf dist/${archiveName}.tar.gz -C dist/${name} bin package.json`;
 }
 
 export { binaries };
