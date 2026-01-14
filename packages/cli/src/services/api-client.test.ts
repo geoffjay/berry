@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:test";
+import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import { ApiClientError, ApiClient } from "./api-client.js";
 import type { BerryConfig } from "./config.js";
 

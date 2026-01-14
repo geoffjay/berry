@@ -11,7 +11,6 @@ const dir = path.resolve(__dirname, "..");
 
 process.chdir(dir);
 
-import pkg from "../package.json";
 import rootPkg from "../../../package.json";
 
 // Use @hlfbkd scope for npm publishing (internal packages remain @berry/*)

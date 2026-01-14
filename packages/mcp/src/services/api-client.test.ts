@@ -1,12 +1,10 @@
-import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:test";
+import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import {
   ApiClientError,
   ApiClient,
   getApiClient,
   type Memory,
   type MemoryType,
-  type CreateMemoryRequest,
-  type SearchMemoriesRequest,
   type SearchResult,
 } from "./api-client";
 

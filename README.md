@@ -149,7 +149,11 @@ Create a file called `berry.plist` in `~/Library/LaunchAgents` with the followin
 </plist>
 ```
 
-Replacing "username" appropriately.
+> [!IMPORTANT]
+> Replace `ProgramArguments` with the output of `which berry` if using npm install
+
+> [!IMPORTANT]
+> Replace "username" appropriately
 
 #### Installation
 
