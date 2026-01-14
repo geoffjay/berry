@@ -1,5 +1,11 @@
 # @berry/script
 
+## 1.6.1
+
+### Patch Changes
+
+- [`6e93d16`](https://github.com/geoffjay/berry/commit/6e93d16f8a2609502a5f5f921f600a58f8f15a6a) Thanks [@geoffjay](https://github.com/geoffjay)! - Add support for curl install method back
+
 ## 1.6.0
 
 ### Minor Changes
