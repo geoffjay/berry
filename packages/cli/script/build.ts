@@ -14,6 +14,9 @@ process.chdir(dir);
 import pkg from "../package.json";
 import rootPkg from "../../../package.json";
 
+// Use unscoped package names for npm publishing
+const mainPackageName = "berry-cli";
+
 const singleFlag = process.argv.includes("--single");
 const baselineFlag = process.argv.includes("--baseline");
 const skipInstall = process.argv.includes("--skip-install");
@@ -92,7 +95,7 @@ if (!skipInstall) {
 }
 for (const item of targets) {
   const name = [
-    pkg.name,
+    mainPackageName,
     item.os,
     item.arch,
     item.avx2 === false ? "baseline" : undefined,
@@ -107,7 +110,7 @@ for (const item of targets) {
     tsconfig: "./tsconfig.json",
     minify: true,
     compile: {
-      target: name.replace(pkg.name, "bun") as any,
+      target: name.replace(mainPackageName, "bun") as any,
       outfile: `dist/${name}/bin/berry`,
       autoloadPackageJson: true,
     },
@@ -134,15 +137,15 @@ for (const item of targets) {
   await $`tar -czf dist/${archiveName}.tar.gz -C dist/${name} bin package.json`;
 }
 
-// Generate the main @berry/cli package
-console.log(`building ${pkg.name} (main package)`);
-await $`mkdir -p dist/${pkg.name}/bin`;
+// Generate the main berry-cli package
+console.log(`building ${mainPackageName} (main package)`);
+await $`mkdir -p dist/${mainPackageName}/bin`;
 
 // Build optionalDependencies from all targets (not just the ones we built)
 const optionalDependencies: Record<string, string> = {};
 for (const item of allTargets) {
   const name = [
-    pkg.name,
+    mainPackageName,
     item.os,
     item.arch,
     item.avx2 === false ? "baseline" : undefined,
@@ -176,8 +179,8 @@ if (!mappedOs || !mappedArch) {
 
 // Try to find the platform-specific package
 const variants = [
-  \`@berry/cli-\${mappedOs}-\${mappedArch}\`,
-  \`@berry/cli-\${mappedOs}-\${mappedArch}-baseline\`,
+  \`berry-cli-\${mappedOs}-\${mappedArch}\`,
+  \`berry-cli-\${mappedOs}-\${mappedArch}-baseline\`,
 ];
 
 let binaryPath = null;
@@ -198,7 +201,7 @@ for (const variant of variants) {
 
 if (!binaryPath) {
   console.error(\`Could not find berry binary for \${platform}-\${arch}\`);
-  console.error("Please try reinstalling: npm install -g @berry/cli");
+  console.error("Please try reinstalling: npm install -g berry-cli");
   process.exit(1);
 }
 
@@ -210,13 +213,13 @@ try {
 }
 `;
 
-await Bun.file(`dist/${pkg.name}/bin/berry.js`).write(wrapperScript);
+await Bun.file(`dist/${mainPackageName}/bin/berry.js`).write(wrapperScript);
 
 // Create the main package.json
-await Bun.file(`dist/${pkg.name}/package.json`).write(
+await Bun.file(`dist/${mainPackageName}/package.json`).write(
   JSON.stringify(
     {
-      name: pkg.name,
+      name: mainPackageName,
       version: Script.version,
       description: "Berry CLI - A tool for managing your development environment",
       bin: {
@@ -237,7 +240,7 @@ await Bun.file(`dist/${pkg.name}/package.json`).write(
   )
 );
 
-console.log(`packaging ${pkg.name.replace("/", "-")}.tar.gz`);
-await $`tar -czf dist/${pkg.name.replace("/", "-")}.tar.gz -C dist/${pkg.name} bin package.json`;
+console.log(`packaging ${mainPackageName}.tar.gz`);
+await $`tar -czf dist/${mainPackageName}.tar.gz -C dist/${mainPackageName} bin package.json`;
 
 export { binaries };

@@ -16,20 +16,20 @@ Before installing Berry, ensure you have the following:
 The easiest way to install Berry is via npm:
 
 ```bash
-npm install -g @berry/cli
+npm install -g berry-cli
 ```
 
 Or with other package managers:
 
 ```bash
 # pnpm
-pnpm add -g @berry/cli
+pnpm add -g berry-cli
 
 # yarn
-yarn global add @berry/cli
+yarn global add berry-cli
 
 # bun
-bun add -g @berry/cli
+bun add -g berry-cli
 ```
 
 This installs a platform-specific native binary for optimal performance.
