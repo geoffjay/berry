@@ -14,8 +14,8 @@ process.chdir(dir);
 import pkg from "../package.json";
 import rootPkg from "../../../package.json";
 
-// Use unscoped package names for npm publishing
-const mainPackageName = "berry-cli";
+// Use @hlfbkd scope for npm publishing (internal packages remain @berry/*)
+const mainPackageName = "@hlfbkd/berry";
 
 const singleFlag = process.argv.includes("--single");
 const baselineFlag = process.argv.includes("--baseline");
@@ -179,8 +179,8 @@ if (!mappedOs || !mappedArch) {
 
 // Try to find the platform-specific package
 const variants = [
-  \`berry-cli-\${mappedOs}-\${mappedArch}\`,
-  \`berry-cli-\${mappedOs}-\${mappedArch}-baseline\`,
+  \`@hlfbkd/berry-\${mappedOs}-\${mappedArch}\`,
+  \`@hlfbkd/berry-\${mappedOs}-\${mappedArch}-baseline\`,
 ];
 
 let binaryPath = null;
@@ -201,7 +201,7 @@ for (const variant of variants) {
 
 if (!binaryPath) {
   console.error(\`Could not find berry binary for \${platform}-\${arch}\`);
-  console.error("Please try reinstalling: npm install -g berry-cli");
+  console.error("Please try reinstalling: npm install -g @hlfbkd/berry");
   process.exit(1);
 }
 

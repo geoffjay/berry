@@ -14,17 +14,17 @@ A memory storage system that exists between you and your AI tooling.
 Install Berry globally using npm:
 
 ```bash
-npm install -g berry-cli
+npm install -g @hlfbkd/berry
 ```
 
 Or with other package managers:
 
 ```bash
 # pnpm
-pnpm add -g berry-cli
+pnpm add -g @hlfbkd/berry
 
 # yarn
-yarn global add berry-cli
+yarn global add @hlfbkd/berry
 ```
 
 ### Installation Script
