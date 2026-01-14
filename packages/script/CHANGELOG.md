@@ -1,5 +1,11 @@
 # @berry/script
 
+## 1.6.0
+
+### Minor Changes
+
+- [`3a1a429`](https://github.com/geoffjay/berry/commit/3a1a42923e006f58cdf930cecf9ef931e53bc141) Thanks [@geoffjay](https://github.com/geoffjay)! - Fix publishing
+
 ## 1.5.1
 
 ### Patch Changes
