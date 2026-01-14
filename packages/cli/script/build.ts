@@ -134,4 +134,110 @@ for (const item of targets) {
   await $`tar -czf dist/${archiveName}.tar.gz -C dist/${name} bin package.json`;
 }
 
+// Generate the main @berry/cli package
+console.log(`building ${pkg.name} (main package)`);
+await $`mkdir -p dist/${pkg.name}/bin`;
+
+// Build optionalDependencies from all targets (not just the ones we built)
+const optionalDependencies: Record<string, string> = {};
+for (const item of allTargets) {
+  const name = [
+    pkg.name,
+    item.os,
+    item.arch,
+    item.avx2 === false ? "baseline" : undefined,
+    item.abi === undefined ? undefined : item.abi,
+  ]
+    .filter(Boolean)
+    .join("-");
+  optionalDependencies[name] = Script.version;
+}
+
+// Create the platform detection wrapper script
+const wrapperScript = `#!/usr/bin/env node
+const { execFileSync } = require("child_process");
+const path = require("path");
+const fs = require("fs");
+
+const platform = process.platform;
+const arch = process.arch;
+
+// Map Node.js arch names to package names
+const archMap = { x64: "x64", arm64: "arm64" };
+const osMap = { darwin: "darwin", linux: "linux", win32: "windows" };
+
+const mappedOs = osMap[platform];
+const mappedArch = archMap[arch];
+
+if (!mappedOs || !mappedArch) {
+  console.error(\`Unsupported platform: \${platform}-\${arch}\`);
+  process.exit(1);
+}
+
+// Try to find the platform-specific package
+const variants = [
+  \`@berry/cli-\${mappedOs}-\${mappedArch}\`,
+  \`@berry/cli-\${mappedOs}-\${mappedArch}-baseline\`,
+];
+
+let binaryPath = null;
+
+for (const variant of variants) {
+  try {
+    const pkgPath = require.resolve(\`\${variant}/package.json\`);
+    const pkgDir = path.dirname(pkgPath);
+    const candidate = path.join(pkgDir, "bin", "berry");
+    if (fs.existsSync(candidate)) {
+      binaryPath = candidate;
+      break;
+    }
+  } catch {
+    // Package not installed, try next variant
+  }
+}
+
+if (!binaryPath) {
+  console.error(\`Could not find berry binary for \${platform}-\${arch}\`);
+  console.error("Please try reinstalling: npm install -g @berry/cli");
+  process.exit(1);
+}
+
+// Execute the binary with all arguments
+try {
+  execFileSync(binaryPath, process.argv.slice(2), { stdio: "inherit" });
+} catch (error) {
+  process.exit(error.status || 1);
+}
+`;
+
+await Bun.file(`dist/${pkg.name}/bin/berry.js`).write(wrapperScript);
+
+// Create the main package.json
+await Bun.file(`dist/${pkg.name}/package.json`).write(
+  JSON.stringify(
+    {
+      name: pkg.name,
+      version: Script.version,
+      description: "Berry CLI - A tool for managing your development environment",
+      bin: {
+        berry: "./bin/berry.js",
+      },
+      optionalDependencies,
+      repository: {
+        type: "git",
+        url: "https://github.com/geoffjay/berry.git",
+      },
+      license: "MIT",
+      engines: {
+        node: ">=18",
+      },
+    },
+    null,
+    2
+  )
+);
+
+console.log(`packaging ${pkg.name.replace("/", "-")}.tar.gz`);
+await $`tar -czf dist/${pkg.name.replace("/", "-")}.tar.gz -C dist/${pkg.name} bin package.json`;
+
 export { binaries };
