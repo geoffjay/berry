@@ -1,6 +1,6 @@
 {
   "name": "@berry/cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "type": "module",
   "bin": {
     "berry": "./bin/run.js",
