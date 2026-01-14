@@ -6,37 +6,68 @@ This guide walks you through installing and using Berry for the first time.
 
 Before installing Berry, ensure you have the following:
 
-- [Bun](https://bun.sh/) - JavaScript runtime
+- [Node.js](https://nodejs.org/) v18+ (for npm installation) or [Bun](https://bun.sh/) (for source installation)
 - [Docker](https://www.docker.com/) - For running ChromaDB
-- [Git](https://git-scm.com/) - For cloning the repository
-
-### Installing Bun
-
-If you don't have Bun installed:
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
 
 ## Installation
 
-### From Source
+### npm (Recommended)
 
-Clone the repository and build:
+The easiest way to install Berry is via npm:
 
 ```bash
+npm install -g @berry/cli
+```
+
+Or with other package managers:
+
+```bash
+# pnpm
+pnpm add -g @berry/cli
+
+# yarn
+yarn global add @berry/cli
+
+# bun
+bun add -g @berry/cli
+```
+
+This installs a platform-specific native binary for optimal performance.
+
+### Installation Script
+
+Alternatively, use the installation script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/geoffjay/berry/main/install.sh | bash
+```
+
+### From Source
+
+For development or contributing, install from source:
+
+```bash
+# Install Bun if you don't have it
+curl -fsSL https://bun.sh/install | bash
+
+# Clone and build
 git clone https://github.com/geoffjay/berry.git
 cd berry
 bun install
 bun run build
-```
 
-Link the CLI globally:
-
-```bash
+# Link the CLI globally
 cd packages/cli
 bun link
 ```
+
+If using `bun link`, ensure `~/.bun/bin` is in your PATH:
+
+```bash
+export PATH="$HOME/.bun/bin:$PATH"
+```
+
+Add this line to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) to make it permanent.
 
 ### Create Configuration
 
@@ -153,7 +184,15 @@ Expected health response:
 
 ### Command not found: berry
 
-Ensure `~/.bun/bin` is in your PATH:
+If installed via npm/pnpm/yarn, ensure your global bin directory is in your PATH. You can find the location with:
+
+```bash
+npm bin -g
+# or
+pnpm bin -g
+```
+
+If installed via `bun link`, ensure `~/.bun/bin` is in your PATH:
 
 ```bash
 export PATH="$HOME/.bun/bin:$PATH"
