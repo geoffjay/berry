@@ -1,6 +1,6 @@
 {
   "name": "@berry/mcp",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "private": true,
   "description": "MCP server for Berry memory system",
   "type": "module",
