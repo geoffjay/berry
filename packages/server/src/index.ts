@@ -59,31 +59,52 @@ app.get("/health", async (c: Context) => {
 // Mount memory routes
 app.route("/", memoryRoutes);
 
-// Server configuration
-const PORT = parseInt(process.env.PORT || "3000", 10);
+/**
+ * Server startup options
+ */
+export interface ServerOptions {
+  port?: number;
+}
 
-// Initialize ChromaDB on startup
-console.log("Initializing Berry server...");
-console.log("Connecting to ChromaDB...");
+/**
+ * Start the Berry server
+ */
+export async function startServer(options: ServerOptions = {}): Promise<void> {
+  const port = options.port ?? parseInt(process.env.PORT || "3000", 10);
 
-initializeChromaDB()
-  .then(() => {
+  console.log("Initializing Berry server...");
+  console.log("Connecting to ChromaDB...");
+
+  try {
+    await initializeChromaDB();
     console.log("ChromaDB connection established.");
-    console.log(`Berry server is running at http://localhost:${PORT}`);
+    console.log(`Berry server is running at http://localhost:${port}`);
     console.log("Available endpoints:");
     console.log("  GET  /health         - Health check");
     console.log("  GET  /v1/memory/:id  - Get memory by ID");
     console.log("  POST /v1/memory      - Create new memory");
     console.log("  DELETE /v1/memory/:id - Delete memory by ID");
     console.log("  POST /v1/search      - Search memories");
-  })
-  .catch((error) => {
+
+    // Start the server and wait indefinitely
+    Bun.serve({
+      port,
+      fetch: app.fetch,
+    });
+
+    // Keep the process running
+    await new Promise(() => {});
+  } catch (error) {
     console.error("Failed to initialize ChromaDB:", error);
     process.exit(1);
-  });
+  }
+}
 
-// Export for Bun to serve
-export default {
-  port: PORT,
-  fetch: app.fetch,
-};
+// Run directly if this is the main module
+const isMainModule = import.meta.main || process.argv[1]?.endsWith("index.ts");
+if (isMainModule) {
+  startServer();
+}
+
+// Export app for testing
+export { app };

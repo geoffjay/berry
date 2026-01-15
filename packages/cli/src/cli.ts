@@ -194,6 +194,22 @@ await yargs(hideBin(process.argv))
       await initCommand();
     }
   )
+  .command(
+    "$internal-serve",
+    false, // Hidden command
+    (yargs) =>
+      yargs.option("port", {
+        alias: "p",
+        type: "number",
+        description: "Port to listen on",
+        default: 4114,
+      }),
+    async (argv) => {
+      // Internal command used by background serve mode
+      const { startServer } = await import("@berry/server");
+      await startServer({ port: argv.port });
+    }
+  )
   .example("berry", "Start interactive mode")
   .example("berry init", "Create default configuration")
   .example('berry remember "Buy milk"', "Quick add a memory")

@@ -1,7 +1,4 @@
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { startServer } from "@berry/server";
 
 export interface ServeOptions {
   port: number;
@@ -12,76 +9,30 @@ export interface ServeOptions {
  * Start the Berry server
  */
 export async function serveCommand(options: ServeOptions): Promise<void> {
-  try {
-    const serverPath = await resolveServerPath();
-
-    if (options.foreground) {
-      await runForeground(serverPath, options.port);
-    } else {
-      await runBackground(serverPath, options.port);
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Failed to start server: ${error.message}`);
-      process.exit(1);
-    }
-    throw error;
+  if (options.foreground) {
+    await runForeground(options.port);
+  } else {
+    await runBackground(options.port);
   }
 }
 
 /**
- * Resolve the path to the server package
+ * Run server in foreground (same process)
  */
-async function resolveServerPath(): Promise<string> {
-  // Development: sibling package (from dist/commands/)
-  const devPaths = [
-    resolve(__dirname, "../../../../server/src/index.ts"),
-    resolve(__dirname, "../../../../server/dist/index.js"),
-    // From src/commands/ during development
-    resolve(__dirname, "../../../server/src/index.ts"),
-    resolve(__dirname, "../../../server/dist/index.js"),
-    // From compiled binary (bunfs)
-    resolve(__dirname, "../../server/src/index.ts"),
-    resolve(__dirname, "../../server/dist/index.js"),
-  ];
-
-  for (const serverPath of devPaths) {
-    const file = Bun.file(serverPath);
-    if (await file.exists()) {
-      return serverPath;
-    }
-  }
-
-  throw new Error(
-    "Could not find @berry/server. Make sure you are in the Berry workspace directory."
-  );
-}
-
-/**
- * Run server in foreground
- */
-async function runForeground(serverPath: string, port: number): Promise<void> {
+async function runForeground(port: number): Promise<void> {
   console.log(`Starting Berry server on port ${port}...`);
-
-  const proc = Bun.spawn(["bun", "run", serverPath], {
-    env: { ...process.env, PORT: String(port) },
-    stdout: "inherit",
-    stderr: "inherit",
-    stdin: "inherit",
-  });
-
-  // Wait for the process
-  await proc.exited;
+  await startServer({ port });
 }
 
 /**
- * Run server in background
+ * Run server in background (spawns self with internal command)
  */
-async function runBackground(serverPath: string, port: number): Promise<void> {
+async function runBackground(port: number): Promise<void> {
   console.log(`Starting Berry server in background on port ${port}...`);
 
-  const proc = Bun.spawn(["bun", "run", serverPath], {
-    env: { ...process.env, PORT: String(port) },
+  // Re-execute self with internal serve command
+  const proc = Bun.spawn([process.execPath, "$internal-serve", "--port", String(port)], {
+    env: { ...process.env },
     stdout: "ignore",
     stderr: "pipe",
     stdin: "ignore",

@@ -16,9 +16,13 @@ import { ApiClientError } from "./services/api-client.js";
 import { setVerbose, info, debug, error as logError } from "./services/logger.js";
 import { getConfig, getConfigPath } from "./services/config.js";
 
-// Parse command-line arguments
-const args = process.argv.slice(2);
-const verbose = args.includes("--verbose") || args.includes("-v");
+/**
+ * MCP Server startup options
+ */
+export interface McpServerOptions {
+  serverUrl?: string;
+  verbose?: boolean;
+}
 
 /**
  * Berry MCP Server
@@ -201,8 +205,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// Start the server
-async function main() {
+/**
+ * Start the Berry MCP server
+ */
+export async function startMcpServer(options: McpServerOptions = {}): Promise<void> {
+  const verbose = options.verbose ?? false;
+
+  // Set server URL if provided
+  if (options.serverUrl) {
+    process.env.BERRY_SERVER_URL = options.serverUrl;
+  }
+
   // Initialize verbose logging if requested
   setVerbose(verbose);
 
@@ -229,7 +242,15 @@ async function main() {
   info("MCP server connected and ready");
 }
 
-main().catch((error) => {
-  logError("Failed to start MCP server", error);
-  process.exit(1);
-});
+// Run directly if this is the main module
+const isMainModule = import.meta.main || process.argv[1]?.endsWith("index.ts");
+if (isMainModule) {
+  // Parse command-line arguments for direct execution
+  const args = process.argv.slice(2);
+  const verbose = args.includes("--verbose") || args.includes("-v");
+
+  startMcpServer({ verbose }).catch((error) => {
+    logError("Failed to start MCP server", error);
+    process.exit(1);
+  });
+}

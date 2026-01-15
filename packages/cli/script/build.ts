@@ -111,6 +111,8 @@ for (const item of targets) {
     define: {
       "process.env.BERRY_VERSION": JSON.stringify(Script.version),
     },
+    // Exclude optional chromadb embedding providers (dynamically imported)
+    external: ["cohere-ai", "ollama"],
     compile: {
       target: name.replace(mainPackageName, "bun") as any,
       outfile: `dist/${name}/bin/berry`,
