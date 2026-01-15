@@ -226,12 +226,12 @@ function validateSearchRequest(
 /**
  * GET /v1/memory/:id - Retrieve a single memory by ID
  * Query params:
- *   - asEntity: Entity ID for visibility check (optional)
- *   - adminAccess: If true and asEntity is human, bypass visibility (optional)
+ *   - asActor: Actor ID for visibility check (optional)
+ *   - adminAccess: If true and asActor is human, bypass visibility (optional)
  */
 memoryRoutes.get("/v1/memory/:id", async (c: Context) => {
   const id = c.req.param("id");
-  const asEntity = c.req.query("asEntity");
+  const asActor = c.req.query("asActor");
   const adminAccess = c.req.query("adminAccess") === "true";
 
   try {
@@ -246,9 +246,9 @@ memoryRoutes.get("/v1/memory/:id", async (c: Context) => {
       return c.json(response, 404);
     }
 
-    // Check visibility access if asEntity is provided
-    if (asEntity) {
-      const hasAccess = chromaDB.checkMemoryAccess(memory, asEntity, adminAccess);
+    // Check visibility access if asActor is provided
+    if (asActor) {
+      const hasAccess = chromaDB.checkMemoryAccess(memory, asActor, adminAccess);
       if (!hasAccess) {
         const response: ApiResponse<null> = {
           success: false,
@@ -308,19 +308,19 @@ memoryRoutes.post("/v1/memory", async (c: Context) => {
 /**
  * DELETE /v1/memory/:id - Delete a memory by ID
  * Query params:
- *   - asEntity: Entity ID requesting deletion (optional but recommended for access control)
- *   - adminAccess: If true and asEntity is human, bypass ownership check (optional)
+ *   - asActor: Actor ID requesting deletion (optional but recommended for access control)
+ *   - adminAccess: If true and asActor is human, bypass ownership check (optional)
  */
 memoryRoutes.delete("/v1/memory/:id", async (c: Context) => {
   const id = c.req.param("id");
-  const asEntity = c.req.query("asEntity");
+  const asActor = c.req.query("asActor");
   const adminAccess = c.req.query("adminAccess") === "true";
 
   try {
     const chromaDB = getChromaDBService();
 
-    // If asEntity provided, check ownership before deletion
-    if (asEntity) {
+    // If asActor provided, check ownership before deletion
+    if (asActor) {
       const memory = await chromaDB.getMemory(id);
 
       if (!memory) {
@@ -332,8 +332,8 @@ memoryRoutes.delete("/v1/memory/:id", async (c: Context) => {
       }
 
       const owner = memory.metadata.owner || memory.metadata.createdBy;
-      const isOwner = owner === asEntity;
-      const isHumanAdmin = asEntity === HUMAN_OWNER_ID && adminAccess;
+      const isOwner = owner === asActor;
+      const isHumanAdmin = asActor === HUMAN_OWNER_ID && adminAccess;
 
       if (!isOwner && !isHumanAdmin) {
         const response: ApiResponse<null> = {
@@ -371,8 +371,8 @@ memoryRoutes.delete("/v1/memory/:id", async (c: Context) => {
 /**
  * POST /v1/search - Search memories by content/metadata
  * Body params:
- *   - asEntity: Entity ID for visibility filtering (optional)
- *   - adminAccess: If true and asEntity is human, bypass visibility (optional)
+ *   - asActor: Actor ID for visibility filtering (optional)
+ *   - adminAccess: If true and asActor is human, bypass visibility (optional)
  */
 memoryRoutes.post("/v1/search", async (c: Context) => {
   try {
@@ -390,9 +390,9 @@ memoryRoutes.post("/v1/search", async (c: Context) => {
     // Extract visibility context from body
     const reqBody = body as Record<string, unknown>;
     let visibilityContext: VisibilityContext | undefined;
-    if (reqBody.asEntity && typeof reqBody.asEntity === "string") {
+    if (reqBody.asActor && typeof reqBody.asActor === "string") {
       visibilityContext = {
-        asEntity: reqBody.asEntity,
+        asActor: reqBody.asActor,
         adminAccess: reqBody.adminAccess === true,
       };
     }
@@ -417,10 +417,10 @@ memoryRoutes.post("/v1/search", async (c: Context) => {
 /**
  * PATCH /v1/memory/:id/visibility - Update memory visibility settings
  * Body params:
- *   - asEntity: Entity ID requesting the update (required)
- *   - adminAccess: If true and asEntity is human, bypass ownership check (optional)
+ *   - asActor: Actor ID requesting the update (required)
+ *   - adminAccess: If true and asActor is human, bypass ownership check (optional)
  *   - visibility: New visibility level (required)
- *   - sharedWith: New shared entity list (optional, for 'shared' visibility)
+ *   - sharedWith: New shared actor list (optional, for 'shared' visibility)
  */
 memoryRoutes.patch("/v1/memory/:id/visibility", async (c: Context) => {
   const id = c.req.param("id");
@@ -429,11 +429,11 @@ memoryRoutes.patch("/v1/memory/:id/visibility", async (c: Context) => {
     const body = await c.req.json();
     const reqBody = body as Record<string, unknown>;
 
-    // Validate asEntity
-    if (!reqBody.asEntity || typeof reqBody.asEntity !== "string") {
+    // Validate asActor
+    if (!reqBody.asActor || typeof reqBody.asActor !== "string") {
       const response: ApiResponse<null> = {
         success: false,
-        error: "asEntity is required",
+        error: "asActor is required",
       };
       return c.json(response, 400);
     }
@@ -463,7 +463,7 @@ memoryRoutes.patch("/v1/memory/:id/visibility", async (c: Context) => {
       sharedWith = reqBody.sharedWith as string[];
     }
 
-    const asEntity = reqBody.asEntity as string;
+    const asActor = reqBody.asActor as string;
     const adminAccess = reqBody.adminAccess === true;
     const visibility = reqBody.visibility as VisibilityLevel;
 
@@ -481,8 +481,8 @@ memoryRoutes.patch("/v1/memory/:id/visibility", async (c: Context) => {
 
     // Check ownership (only owner or human admin can change visibility)
     const owner = memory.metadata.owner || memory.metadata.createdBy;
-    const isOwner = owner === asEntity;
-    const isHumanAdmin = asEntity === HUMAN_OWNER_ID && adminAccess;
+    const isOwner = owner === asActor;
+    const isHumanAdmin = asActor === HUMAN_OWNER_ID && adminAccess;
 
     if (!isOwner && !isHumanAdmin) {
       const response: ApiResponse<null> = {

@@ -27,10 +27,10 @@ describe("handleForget", () => {
     expect(mockDeleteMemory).toHaveBeenCalledWith("mem_123", undefined);
   });
 
-  test("deletes memory with asEntity for ownership check", async () => {
+  test("deletes memory with asActor for ownership check", async () => {
     const input: ForgetInput = {
       id: "mem_123",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     await handleForget(input);

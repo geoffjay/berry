@@ -60,7 +60,7 @@ interface ServerSearchRequest {
     };
   };
   limit?: number;
-  asEntity?: string;
+  asActor?: string;
   adminAccess?: boolean;
 }
 
@@ -97,7 +97,7 @@ export interface CreateMemoryRequest {
  */
 export interface SearchMemoriesRequest {
   query: string;
-  asEntity: string;
+  asActor: string;
   type?: MemoryType;
   tags?: string[];
   limit?: number;
@@ -186,10 +186,10 @@ export class ApiClient {
   /**
    * Get a memory by ID
    */
-  async getMemory(id: string, asEntity?: string): Promise<Memory> {
+  async getMemory(id: string, asActor?: string): Promise<Memory> {
     let url = `/v1/memory/${encodeURIComponent(id)}`;
-    if (asEntity) {
-      url += `?asEntity=${encodeURIComponent(asEntity)}`;
+    if (asActor) {
+      url += `?asActor=${encodeURIComponent(asActor)}`;
     }
 
     const response = await this.request<ApiResponse<ServerMemory>>(url);
@@ -204,10 +204,10 @@ export class ApiClient {
   /**
    * Delete a memory by ID
    */
-  async deleteMemory(id: string, asEntity?: string): Promise<void> {
+  async deleteMemory(id: string, asActor?: string): Promise<void> {
     let url = `/v1/memory/${encodeURIComponent(id)}`;
-    if (asEntity) {
-      url += `?asEntity=${encodeURIComponent(asEntity)}`;
+    if (asActor) {
+      url += `?asActor=${encodeURIComponent(asActor)}`;
     }
 
     const response = await this.request<ApiResponse<{ id: string }>>(url, { method: "DELETE" });
@@ -225,7 +225,7 @@ export class ApiClient {
       query: request.query,
       limit: request.limit,
       filters: {},
-      asEntity: request.asEntity,
+      asActor: request.asActor,
     };
 
     if (request.type) {

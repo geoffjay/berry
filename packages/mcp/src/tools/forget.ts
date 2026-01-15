@@ -2,13 +2,13 @@ import { getApiClient } from "../services/api-client.js";
 
 export interface ForgetInput {
   id: string;
-  asEntity?: string;
+  asActor?: string;
 }
 
 export async function handleForget(input: ForgetInput): Promise<string> {
   const apiClient = getApiClient();
 
-  await apiClient.deleteMemory(input.id, input.asEntity);
+  await apiClient.deleteMemory(input.id, input.asActor);
 
   return JSON.stringify(
     {

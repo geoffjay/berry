@@ -13,7 +13,7 @@ export type MemoryType = "question" | "request" | "information";
 export type VisibilityLevel = "private" | "shared" | "public";
 
 /**
- * Special entity identifier for the human owner who has admin access
+ * Special actor identifier for the human owner who has admin access
  */
 export const HUMAN_OWNER_ID = "human";
 
@@ -39,7 +39,7 @@ export interface MemoryMetadata {
   owner?: string;
   /** Visibility level for access control (defaults to "public" for backwards compatibility) */
   visibility?: VisibilityLevel;
-  /** Entity IDs that can access this memory (only relevant for "shared" visibility) */
+  /** Actor IDs that can access this memory (only relevant for "shared" visibility) */
   sharedWith?: string[];
 }
 
@@ -71,7 +71,7 @@ export interface CreateMemoryRequest {
     owner?: string;
     /** Visibility level (defaults to "public") */
     visibility?: VisibilityLevel;
-    /** Entity IDs that can access this memory (for "shared" visibility) */
+    /** Actor IDs that can access this memory (for "shared" visibility) */
     sharedWith?: string[];
   };
 }
@@ -106,8 +106,8 @@ export interface SearchFilters {
  * Visibility context for access control during queries
  */
 export interface VisibilityContext {
-  /** The entity performing the query (for visibility filtering) */
-  asEntity: string;
+  /** The actor performing the query (for visibility filtering) */
+  asActor: string;
   /** If true, bypass visibility checks (only valid for HUMAN_OWNER_ID) */
   adminAccess?: boolean;
 }

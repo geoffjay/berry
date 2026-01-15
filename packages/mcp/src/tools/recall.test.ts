@@ -38,10 +38,10 @@ describe("handleRecall", () => {
     expect(mockGetMemory).toHaveBeenCalledWith("mem_123", undefined);
   });
 
-  test("retrieves memory with asEntity", async () => {
+  test("retrieves memory with asActor", async () => {
     const input: RecallInput = {
       id: "mem_123",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     await handleRecall(input);

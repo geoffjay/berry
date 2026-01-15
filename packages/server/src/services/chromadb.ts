@@ -283,24 +283,24 @@ export class ChromaDBService {
   private buildVisibilityFilter(
     visibilityContext: VisibilityContext
   ): Record<string, unknown> | undefined {
-    const { asEntity, adminAccess } = visibilityContext;
+    const { asActor, adminAccess } = visibilityContext;
 
     // Human admin bypass - no visibility filter needed
-    if (asEntity === HUMAN_OWNER_ID && adminAccess) {
+    if (asActor === HUMAN_OWNER_ID && adminAccess) {
       return undefined;
     }
 
     // Build OR conditions for visibility access:
     // 1. Public memories (explicit visibility)
-    // 2. Private memories owned by this entity
-    // 3. Shared memories owned by this entity (sharedWith checked post-query)
+    // 2. Private memories owned by this actor
+    // 3. Shared memories owned by this actor (sharedWith checked post-query)
     // Note: Legacy memories without visibility field are handled post-query
     const visibilityConditions: Record<string, unknown>[] = [
       // Public memories
       { visibility: { $eq: "public" } },
-      // Private memories owned by this entity
+      // Private memories owned by this actor
       {
-        $and: [{ visibility: { $eq: "private" } }, { owner: { $eq: asEntity } }],
+        $and: [{ visibility: { $eq: "private" } }, { owner: { $eq: asActor } }],
       },
       // Shared memories - include all shared, filter by sharedWith post-query
       { visibility: { $eq: "shared" } },
@@ -310,11 +310,11 @@ export class ChromaDBService {
   }
 
   /**
-   * Check if an entity has access to a specific memory
+   * Check if an actor has access to a specific memory
    */
-  checkMemoryAccess(memory: Memory, asEntity: string, adminAccess: boolean = false): boolean {
+  checkMemoryAccess(memory: Memory, asActor: string, adminAccess: boolean = false): boolean {
     // Human admin bypass
-    if (asEntity === HUMAN_OWNER_ID && adminAccess) {
+    if (asActor === HUMAN_OWNER_ID && adminAccess) {
       return true;
     }
 
@@ -330,11 +330,11 @@ export class ChromaDBService {
       case "public":
         return true;
       case "private":
-        return owner === asEntity;
+        return owner === asActor;
       case "shared":
-        if (owner === asEntity) return true;
+        if (owner === asActor) return true;
         const sharedWith = memory.metadata.sharedWith || [];
-        return sharedWith.includes(asEntity);
+        return sharedWith.includes(asActor);
       default:
         return false;
     }
@@ -347,14 +347,14 @@ export class ChromaDBService {
     memories: Memory[],
     visibilityContext: VisibilityContext
   ): Memory[] {
-    const { asEntity, adminAccess } = visibilityContext;
+    const { asActor, adminAccess } = visibilityContext;
 
     // Human admin bypass
-    if (asEntity === HUMAN_OWNER_ID && adminAccess) {
+    if (asActor === HUMAN_OWNER_ID && adminAccess) {
       return memories;
     }
 
-    return memories.filter((memory) => this.checkMemoryAccess(memory, asEntity, adminAccess));
+    return memories.filter((memory) => this.checkMemoryAccess(memory, asActor, adminAccess));
   }
 
   /**

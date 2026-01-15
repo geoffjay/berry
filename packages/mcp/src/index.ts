@@ -51,7 +51,7 @@ const tools = [
   {
     name: "remember",
     description:
-      "Store a new memory in Berry. Use this to save information, questions, or requests for later retrieval. Requires entity identification.",
+      "Store a new memory in Berry. Use this to save information, questions, or requests for later retrieval. Requires actor identification.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -81,7 +81,7 @@ const tools = [
         sharedWith: {
           type: "array",
           items: { type: "string" },
-          description: "Entity IDs that can access this memory (for 'shared' visibility)",
+          description: "Actor IDs that can access this memory (for 'shared' visibility)",
         },
       },
       required: ["content", "createdBy"],
@@ -97,9 +97,9 @@ const tools = [
           type: "string",
           description: "The memory ID to retrieve",
         },
-        asEntity: {
+        asActor: {
           type: "string",
-          description: "Your entity identifier for visibility filtering",
+          description: "Your actor identifier for visibility filtering",
         },
       },
       required: ["id"],
@@ -115,9 +115,9 @@ const tools = [
           type: "string",
           description: "The memory ID to delete",
         },
-        asEntity: {
+        asActor: {
           type: "string",
-          description: "Your entity identifier for ownership verification",
+          description: "Your actor identifier for ownership verification",
         },
       },
       required: ["id"],
@@ -134,9 +134,9 @@ const tools = [
           type: "string",
           description: "The search query for vector similarity matching",
         },
-        asEntity: {
+        asActor: {
           type: "string",
-          description: "Your entity identifier for visibility filtering (required)",
+          description: "Your actor identifier for visibility filtering (required)",
         },
         type: {
           type: "string",
@@ -161,7 +161,7 @@ const tools = [
           description: "End date filter in ISO format (e.g., 2024-12-31)",
         },
       },
-      required: ["query", "asEntity"],
+      required: ["query", "asActor"],
     },
   },
 ];

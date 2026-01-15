@@ -327,7 +327,7 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      const results = await client.searchMemories({ query: "test", asEntity: "test-agent" });
+      const results = await client.searchMemories({ query: "test", asActor: "test-agent" });
 
       expect(results).toHaveLength(2);
       expect(results[0].memory.id).toBe("mem_1");
@@ -349,7 +349,7 @@ describe("ApiClient", () => {
         } as Response);
       });
 
-      await client.searchMemories({ query: "test", asEntity: "test-agent", type: "question" });
+      await client.searchMemories({ query: "test", asActor: "test-agent", type: "question" });
     });
 
     test("includes tags filter in request", async () => {
@@ -366,7 +366,7 @@ describe("ApiClient", () => {
         } as Response);
       });
 
-      await client.searchMemories({ query: "test", asEntity: "test-agent", tags: ["important", "work"] });
+      await client.searchMemories({ query: "test", asActor: "test-agent", tags: ["important", "work"] });
     });
 
     test("includes date range filter in request", async () => {
@@ -388,7 +388,7 @@ describe("ApiClient", () => {
 
       await client.searchMemories({
         query: "test",
-        asEntity: "test-agent",
+        asActor: "test-agent",
         from: "2024-01-01",
         to: "2024-12-31",
       });
@@ -406,7 +406,7 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      await expect(client.searchMemories({ query: "test", asEntity: "test-agent" })).rejects.toThrow("Search failed");
+      await expect(client.searchMemories({ query: "test", asActor: "test-agent" })).rejects.toThrow("Search failed");
     });
   });
 

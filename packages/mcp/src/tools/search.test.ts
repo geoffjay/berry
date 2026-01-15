@@ -44,10 +44,10 @@ describe("handleSearch", () => {
     mockSearchMemories.mockClear();
   });
 
-  test("searches with query text and asEntity", async () => {
+  test("searches with query text and asActor", async () => {
     const input: SearchInput = {
       query: "test query",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     const result = await handleSearch(input);
@@ -57,7 +57,7 @@ describe("handleSearch", () => {
     expect(parsed.count).toBe(2);
     expect(mockSearchMemories).toHaveBeenCalledWith({
       query: "test query",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       type: undefined,
       tags: undefined,
       limit: undefined,
@@ -69,7 +69,7 @@ describe("handleSearch", () => {
   test("searches with all filter options", async () => {
     const input: SearchInput = {
       query: "test query",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       type: "question",
       tags: ["important", "work"],
       limit: 5,
@@ -81,7 +81,7 @@ describe("handleSearch", () => {
 
     expect(mockSearchMemories).toHaveBeenCalledWith({
       query: "test query",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       type: "question",
       tags: ["important", "work"],
       limit: 5,
@@ -93,7 +93,7 @@ describe("handleSearch", () => {
   test("returns JSON-formatted response", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     const result = await handleSearch(input);
@@ -108,7 +108,7 @@ describe("handleSearch", () => {
   test("includes result count", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     const result = await handleSearch(input);
@@ -120,7 +120,7 @@ describe("handleSearch", () => {
   test("includes score for each result", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     const result = await handleSearch(input);
@@ -133,7 +133,7 @@ describe("handleSearch", () => {
   test("includes memory details in each result", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     const result = await handleSearch(input);
@@ -154,7 +154,7 @@ describe("handleSearch", () => {
 
     const input: SearchInput = {
       query: "nonexistent",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     const result = await handleSearch(input);
@@ -165,17 +165,17 @@ describe("handleSearch", () => {
     expect(parsed.results).toEqual([]);
   });
 
-  test("rejects when asEntity is missing", async () => {
+  test("rejects when asActor is missing", async () => {
     const input = {
       query: "test",
-      asEntity: "",
+      asActor: "",
     } as SearchInput;
 
     const result = await handleSearch(input);
     const parsed = JSON.parse(result);
 
     expect(parsed.success).toBe(false);
-    expect(parsed.error).toContain("asEntity is required");
+    expect(parsed.error).toContain("asActor is required");
   });
 
   test("propagates API errors", async () => {
@@ -183,7 +183,7 @@ describe("handleSearch", () => {
 
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     await expect(handleSearch(input)).rejects.toThrow("Search failed");
@@ -192,7 +192,7 @@ describe("handleSearch", () => {
   test("searches with type filter only", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       type: "request",
     };
 
@@ -204,7 +204,7 @@ describe("handleSearch", () => {
   test("searches with tags filter only", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       tags: ["work", "important"],
     };
 
@@ -218,7 +218,7 @@ describe("handleSearch", () => {
   test("searches with limit only", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       limit: 10,
     };
 
@@ -230,7 +230,7 @@ describe("handleSearch", () => {
   test("searches with date range only", async () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
       from: "2024-01-01",
       to: "2024-06-30",
     };
@@ -247,14 +247,14 @@ describe("handleSearch", () => {
 });
 
 describe("SearchInput type", () => {
-  test("requires query and asEntity fields", () => {
+  test("requires query and asActor fields", () => {
     const input: SearchInput = {
       query: "test query",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     expect(input.query).toBe("test query");
-    expect(input.asEntity).toBe("test-agent");
+    expect(input.asActor).toBe("test-agent");
   });
 
   test("accepts all valid memory types", () => {
@@ -263,7 +263,7 @@ describe("SearchInput type", () => {
     types.forEach((type) => {
       const input: SearchInput = {
         query: "test",
-        asEntity: "test-agent",
+        asActor: "test-agent",
         type,
       };
       expect(input.type).toBe(type);
@@ -273,7 +273,7 @@ describe("SearchInput type", () => {
   test("allows optional fields to be undefined", () => {
     const input: SearchInput = {
       query: "test",
-      asEntity: "test-agent",
+      asActor: "test-agent",
     };
 
     expect(input.type).toBeUndefined();
