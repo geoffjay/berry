@@ -8,6 +8,7 @@ export interface RememberOptions {
   type?: string;
   tags?: string;
   by?: string;
+  references?: string;
 }
 
 /**
@@ -65,6 +66,14 @@ export async function rememberCommand(options: RememberOptions): Promise<void> {
         .filter(Boolean)
     : [];
 
+  // Parse references
+  const references = options.references
+    ? options.references
+        .split(",")
+        .map((ref) => ref.trim())
+        .filter(Boolean)
+    : undefined;
+
   // Get creator
   const createdBy = options.by ?? config.defaults.createdBy;
 
@@ -77,6 +86,7 @@ export async function rememberCommand(options: RememberOptions): Promise<void> {
       type: memoryType,
       tags,
       createdBy,
+      references,
     });
 
     spinner.succeed("Memory saved successfully!");

@@ -46,6 +46,11 @@ await yargs(hideBin(process.argv))
         .option("by", {
           type: "string",
           description: "Creator identifier",
+        })
+        .option("references", {
+          alias: "r",
+          type: "string",
+          description: "Comma-separated memory IDs to reference",
         }),
     async (argv) => {
       await rememberCommand({
@@ -53,6 +58,7 @@ await yargs(hideBin(process.argv))
         type: argv.type,
         tags: argv.tags,
         by: argv.by,
+        references: argv.references,
       });
     }
   )

@@ -69,6 +69,7 @@ export interface CreateMemoryRequest {
   type?: MemoryType;
   tags?: string[];
   createdBy?: string;
+  references?: string[];
 }
 
 /**
@@ -135,6 +136,7 @@ export class ApiClient {
       metadata: {
         createdBy: request.createdBy,
         tags: request.tags,
+        references: request.references,
       },
     };
 

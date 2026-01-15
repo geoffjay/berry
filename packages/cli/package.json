@@ -3,8 +3,7 @@
   "version": "1.6.0",
   "type": "module",
   "bin": {
-    "berry": "./bin/run.js",
-    "berry-dev": "./bin/run.js"
+    "berry": "./bin/run.js"
   },
   "main": "src/cli.ts",
   "scripts": {
