@@ -40,6 +40,7 @@ interface ServerSearchRequest {
     type?: MemoryType;
     createdBy?: string;
     tags?: string[];
+    references?: string[];
     dateRange?: {
       from?: string;
       to?: string;
@@ -79,6 +80,7 @@ export interface SearchMemoriesRequest {
   query: string;
   type?: MemoryType;
   tags?: string[];
+  references?: string[];
   limit?: number;
   from?: string;
   to?: string;
@@ -196,6 +198,9 @@ export class ApiClient {
     }
     if (request.tags && request.tags.length > 0) {
       body.filters!.tags = request.tags;
+    }
+    if (request.references && request.references.length > 0) {
+      body.filters!.references = request.references;
     }
     if (request.from || request.to) {
       body.filters!.dateRange = {

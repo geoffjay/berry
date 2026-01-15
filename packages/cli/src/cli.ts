@@ -108,6 +108,11 @@ await yargs(hideBin(process.argv))
           type: "string",
           description: "Filter by tags (comma-separated)",
         })
+        .option("references", {
+          alias: "r",
+          type: "string",
+          description: "Filter by referenced memory IDs (comma-separated)",
+        })
         .option("limit", {
           alias: "l",
           type: "number",
@@ -127,6 +132,7 @@ await yargs(hideBin(process.argv))
         query: argv.query!,
         type: argv.type,
         tags: argv.tags,
+        references: argv.references,
         limit: argv.limit,
         from: argv.from,
         to: argv.to,

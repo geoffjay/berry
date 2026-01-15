@@ -7,6 +7,7 @@ export interface SearchOptions {
   query: string;
   type?: string;
   tags?: string;
+  references?: string;
   limit?: number;
   from?: string;
   to?: string;
@@ -46,6 +47,14 @@ export async function searchCommand(options: SearchOptions): Promise<void> {
         .filter(Boolean)
     : undefined;
 
+  // Parse references
+  const references = options.references
+    ? options.references
+        .split(",")
+        .map((ref: string) => ref.trim())
+        .filter(Boolean)
+    : undefined;
+
   const spinner = ora("Searching memories...").start();
 
   try {
@@ -53,6 +62,7 @@ export async function searchCommand(options: SearchOptions): Promise<void> {
       query: options.query,
       type: options.type as "question" | "request" | "information" | undefined,
       tags,
+      references,
       limit: options.limit,
       from: options.from,
       to: options.to,
