@@ -142,6 +142,7 @@ describe("ApiClient", () => {
         content: "Test content",
         type: "information",
         tags: ["test"],
+        createdBy: "test-agent",
       });
 
       expect(memory.id).toBe("mem_123");
@@ -172,7 +173,7 @@ describe("ApiClient", () => {
         } as Response);
       });
 
-      await client.createMemory({ content: "Test content" });
+      await client.createMemory({ content: "Test content", createdBy: "test-agent" });
     });
 
     test("throws error on failure response", async () => {
@@ -190,7 +191,7 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      await expect(client.createMemory({ content: "Test" })).rejects.toThrow("Validation failed");
+      await expect(client.createMemory({ content: "Test", createdBy: "test-agent" })).rejects.toThrow("Validation failed");
     });
   });
 
@@ -326,7 +327,7 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      const results = await client.searchMemories({ query: "test" });
+      const results = await client.searchMemories({ query: "test", asEntity: "test-agent" });
 
       expect(results).toHaveLength(2);
       expect(results[0].memory.id).toBe("mem_1");
@@ -348,7 +349,7 @@ describe("ApiClient", () => {
         } as Response);
       });
 
-      await client.searchMemories({ query: "test", type: "question" });
+      await client.searchMemories({ query: "test", asEntity: "test-agent", type: "question" });
     });
 
     test("includes tags filter in request", async () => {
@@ -365,7 +366,7 @@ describe("ApiClient", () => {
         } as Response);
       });
 
-      await client.searchMemories({ query: "test", tags: ["important", "work"] });
+      await client.searchMemories({ query: "test", asEntity: "test-agent", tags: ["important", "work"] });
     });
 
     test("includes date range filter in request", async () => {
@@ -387,6 +388,7 @@ describe("ApiClient", () => {
 
       await client.searchMemories({
         query: "test",
+        asEntity: "test-agent",
         from: "2024-01-01",
         to: "2024-12-31",
       });
@@ -404,7 +406,7 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      await expect(client.searchMemories({ query: "test" })).rejects.toThrow("Search failed");
+      await expect(client.searchMemories({ query: "test", asEntity: "test-agent" })).rejects.toThrow("Search failed");
     });
   });
 

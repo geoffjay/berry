@@ -2,6 +2,7 @@ import { getApiClient, type MemoryType } from "../services/api-client.js";
 
 export interface SearchInput {
   query: string;
+  asEntity: string;
   type?: MemoryType;
   tags?: string[];
   limit?: number;
@@ -10,10 +11,23 @@ export interface SearchInput {
 }
 
 export async function handleSearch(input: SearchInput): Promise<string> {
+  // Validate asEntity is provided
+  if (!input.asEntity || input.asEntity.trim() === "") {
+    return JSON.stringify(
+      {
+        success: false,
+        error: "asEntity is required for searching memories",
+      },
+      null,
+      2
+    );
+  }
+
   const apiClient = getApiClient();
 
   const results = await apiClient.searchMemories({
     query: input.query,
+    asEntity: input.asEntity,
     type: input.type,
     tags: input.tags,
     limit: input.limit,
@@ -34,6 +48,8 @@ export async function handleSearch(input: SearchInput): Promise<string> {
           tags: result.memory.tags,
           createdBy: result.memory.createdBy,
           createdAt: result.memory.createdAt,
+          visibility: result.memory.visibility,
+          sharedWith: result.memory.sharedWith,
         },
       })),
     },

@@ -35,7 +35,18 @@ describe("handleRecall", () => {
 
     expect(parsed.success).toBe(true);
     expect(parsed.memory.id).toBe("mem_123");
-    expect(mockGetMemory).toHaveBeenCalledWith("mem_123");
+    expect(mockGetMemory).toHaveBeenCalledWith("mem_123", undefined);
+  });
+
+  test("retrieves memory with asEntity", async () => {
+    const input: RecallInput = {
+      id: "mem_123",
+      asEntity: "test-agent",
+    };
+
+    await handleRecall(input);
+
+    expect(mockGetMemory).toHaveBeenCalledWith("mem_123", "test-agent");
   });
 
   test("returns JSON-formatted response", async () => {
@@ -86,7 +97,7 @@ describe("handleRecall", () => {
     for (const id of ids) {
       mockGetMemory.mockClear();
       await handleRecall({ id });
-      expect(mockGetMemory).toHaveBeenCalledWith(id);
+      expect(mockGetMemory).toHaveBeenCalledWith(id, undefined);
     }
   });
 });

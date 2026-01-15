@@ -10,7 +10,10 @@ import type {
   CreateMemoryRequest,
   SearchMemoriesRequest,
   MemoryType,
+  VisibilityLevel,
+  VisibilityContext,
 } from "../types";
+import { HUMAN_OWNER_ID } from "../types";
 
 const memoryRoutes = new Hono();
 
@@ -19,6 +22,13 @@ const memoryRoutes = new Hono();
  */
 function isValidMemoryType(type: unknown): type is MemoryType {
   return type === "question" || type === "request" || type === "information";
+}
+
+/**
+ * Validate visibility level
+ */
+function isValidVisibility(visibility: unknown): visibility is VisibilityLevel {
+  return visibility === "private" || visibility === "shared" || visibility === "public";
 }
 
 /**
@@ -78,6 +88,33 @@ function validateCreateRequest(
         };
       }
       data.metadata.references = meta.references;
+    }
+
+    if (meta.owner !== undefined) {
+      if (typeof meta.owner !== "string" || meta.owner.trim() === "") {
+        return { valid: false, error: "metadata.owner must be a non-empty string" };
+      }
+      data.metadata.owner = meta.owner;
+    }
+
+    if (meta.visibility !== undefined) {
+      if (!isValidVisibility(meta.visibility)) {
+        return {
+          valid: false,
+          error: "metadata.visibility must be 'private', 'shared', or 'public'",
+        };
+      }
+      data.metadata.visibility = meta.visibility;
+    }
+
+    if (meta.sharedWith !== undefined) {
+      if (!Array.isArray(meta.sharedWith) || !meta.sharedWith.every((s) => typeof s === "string")) {
+        return {
+          valid: false,
+          error: "metadata.sharedWith must be an array of strings",
+        };
+      }
+      data.metadata.sharedWith = meta.sharedWith;
     }
   }
 
@@ -188,9 +225,14 @@ function validateSearchRequest(
 
 /**
  * GET /v1/memory/:id - Retrieve a single memory by ID
+ * Query params:
+ *   - asEntity: Entity ID for visibility check (optional)
+ *   - adminAccess: If true and asEntity is human, bypass visibility (optional)
  */
 memoryRoutes.get("/v1/memory/:id", async (c: Context) => {
   const id = c.req.param("id");
+  const asEntity = c.req.query("asEntity");
+  const adminAccess = c.req.query("adminAccess") === "true";
 
   try {
     const chromaDB = getChromaDBService();
@@ -202,6 +244,18 @@ memoryRoutes.get("/v1/memory/:id", async (c: Context) => {
         error: "Memory not found",
       };
       return c.json(response, 404);
+    }
+
+    // Check visibility access if asEntity is provided
+    if (asEntity) {
+      const hasAccess = chromaDB.checkMemoryAccess(memory, asEntity, adminAccess);
+      if (!hasAccess) {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: "Access denied",
+        };
+        return c.json(response, 403);
+      }
     }
 
     const response: ApiResponse<Memory> = {
@@ -253,12 +307,43 @@ memoryRoutes.post("/v1/memory", async (c: Context) => {
 
 /**
  * DELETE /v1/memory/:id - Delete a memory by ID
+ * Query params:
+ *   - asEntity: Entity ID requesting deletion (optional but recommended for access control)
+ *   - adminAccess: If true and asEntity is human, bypass ownership check (optional)
  */
 memoryRoutes.delete("/v1/memory/:id", async (c: Context) => {
   const id = c.req.param("id");
+  const asEntity = c.req.query("asEntity");
+  const adminAccess = c.req.query("adminAccess") === "true";
 
   try {
     const chromaDB = getChromaDBService();
+
+    // If asEntity provided, check ownership before deletion
+    if (asEntity) {
+      const memory = await chromaDB.getMemory(id);
+
+      if (!memory) {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: "Memory not found",
+        };
+        return c.json(response, 404);
+      }
+
+      const owner = memory.metadata.owner || memory.metadata.createdBy;
+      const isOwner = owner === asEntity;
+      const isHumanAdmin = asEntity === HUMAN_OWNER_ID && adminAccess;
+
+      if (!isOwner && !isHumanAdmin) {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: "Only the owner can delete this memory",
+        };
+        return c.json(response, 403);
+      }
+    }
+
     const deleted = await chromaDB.deleteMemory(id);
 
     if (!deleted) {
@@ -285,6 +370,9 @@ memoryRoutes.delete("/v1/memory/:id", async (c: Context) => {
 
 /**
  * POST /v1/search - Search memories by content/metadata
+ * Body params:
+ *   - asEntity: Entity ID for visibility filtering (optional)
+ *   - adminAccess: If true and asEntity is human, bypass visibility (optional)
  */
 memoryRoutes.post("/v1/search", async (c: Context) => {
   try {
@@ -299,8 +387,18 @@ memoryRoutes.post("/v1/search", async (c: Context) => {
       return c.json(response, 400);
     }
 
+    // Extract visibility context from body
+    const reqBody = body as Record<string, unknown>;
+    let visibilityContext: VisibilityContext | undefined;
+    if (reqBody.asEntity && typeof reqBody.asEntity === "string") {
+      visibilityContext = {
+        asEntity: reqBody.asEntity,
+        adminAccess: reqBody.adminAccess === true,
+      };
+    }
+
     const chromaDB = getChromaDBService();
-    const memories = await chromaDB.searchMemories(validation.data);
+    const memories = await chromaDB.searchMemories(validation.data, visibilityContext);
 
     const response: ApiResponse<Memory[]> = {
       success: true,
@@ -311,6 +409,101 @@ memoryRoutes.post("/v1/search", async (c: Context) => {
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : "Failed to search memories",
+    };
+    return c.json(response, 500);
+  }
+});
+
+/**
+ * PATCH /v1/memory/:id/visibility - Update memory visibility settings
+ * Body params:
+ *   - asEntity: Entity ID requesting the update (required)
+ *   - adminAccess: If true and asEntity is human, bypass ownership check (optional)
+ *   - visibility: New visibility level (required)
+ *   - sharedWith: New shared entity list (optional, for 'shared' visibility)
+ */
+memoryRoutes.patch("/v1/memory/:id/visibility", async (c: Context) => {
+  const id = c.req.param("id");
+
+  try {
+    const body = await c.req.json();
+    const reqBody = body as Record<string, unknown>;
+
+    // Validate asEntity
+    if (!reqBody.asEntity || typeof reqBody.asEntity !== "string") {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: "asEntity is required",
+      };
+      return c.json(response, 400);
+    }
+
+    // Validate visibility
+    if (!reqBody.visibility || !isValidVisibility(reqBody.visibility)) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: "visibility is required and must be 'private', 'shared', or 'public'",
+      };
+      return c.json(response, 400);
+    }
+
+    // Validate sharedWith if provided
+    let sharedWith: string[] | undefined;
+    if (reqBody.sharedWith !== undefined) {
+      if (
+        !Array.isArray(reqBody.sharedWith) ||
+        !reqBody.sharedWith.every((s) => typeof s === "string")
+      ) {
+        const response: ApiResponse<null> = {
+          success: false,
+          error: "sharedWith must be an array of strings",
+        };
+        return c.json(response, 400);
+      }
+      sharedWith = reqBody.sharedWith as string[];
+    }
+
+    const asEntity = reqBody.asEntity as string;
+    const adminAccess = reqBody.adminAccess === true;
+    const visibility = reqBody.visibility as VisibilityLevel;
+
+    const chromaDB = getChromaDBService();
+
+    // Get existing memory
+    const memory = await chromaDB.getMemory(id);
+    if (!memory) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: "Memory not found",
+      };
+      return c.json(response, 404);
+    }
+
+    // Check ownership (only owner or human admin can change visibility)
+    const owner = memory.metadata.owner || memory.metadata.createdBy;
+    const isOwner = owner === asEntity;
+    const isHumanAdmin = asEntity === HUMAN_OWNER_ID && adminAccess;
+
+    if (!isOwner && !isHumanAdmin) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: "Only the owner can modify visibility",
+      };
+      return c.json(response, 403);
+    }
+
+    // Update visibility
+    const updatedMemory = await chromaDB.updateVisibility(id, visibility, sharedWith);
+
+    const response: ApiResponse<Memory> = {
+      success: true,
+      data: updatedMemory!,
+    };
+    return c.json(response, 200);
+  } catch (error) {
+    const response: ApiResponse<null> = {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update visibility",
     };
     return c.json(response, 500);
   }

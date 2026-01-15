@@ -51,7 +51,7 @@ const tools = [
   {
     name: "remember",
     description:
-      "Store a new memory in Berry. Use this to save information, questions, or requests for later retrieval.",
+      "Store a new memory in Berry. Use this to save information, questions, or requests for later retrieval. Requires entity identification.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -71,10 +71,20 @@ const tools = [
         },
         createdBy: {
           type: "string",
-          description: "Identifier for who created this memory",
+          description: "Identifier for who created this memory (required for AI agents)",
+        },
+        visibility: {
+          type: "string",
+          enum: ["private", "shared", "public"],
+          description: "Visibility level for access control (default: public)",
+        },
+        sharedWith: {
+          type: "array",
+          items: { type: "string" },
+          description: "Entity IDs that can access this memory (for 'shared' visibility)",
         },
       },
-      required: ["content"],
+      required: ["content", "createdBy"],
     },
   },
   {
@@ -87,19 +97,27 @@ const tools = [
           type: "string",
           description: "The memory ID to retrieve",
         },
+        asEntity: {
+          type: "string",
+          description: "Your entity identifier for visibility filtering",
+        },
       },
       required: ["id"],
     },
   },
   {
     name: "forget",
-    description: "Delete a memory by its ID. This action is permanent and cannot be undone.",
+    description: "Delete a memory by its ID. Only the owner or human admin can delete a memory.",
     inputSchema: {
       type: "object" as const,
       properties: {
         id: {
           type: "string",
           description: "The memory ID to delete",
+        },
+        asEntity: {
+          type: "string",
+          description: "Your entity identifier for ownership verification",
         },
       },
       required: ["id"],
@@ -108,13 +126,17 @@ const tools = [
   {
     name: "search",
     description:
-      "Search memories using vector similarity. Returns memories matching the query, optionally filtered by type, tags, or date range.",
+      "Search memories using vector similarity. Returns memories matching the query, filtered by visibility and optionally by type, tags, or date range.",
     inputSchema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
           description: "The search query for vector similarity matching",
+        },
+        asEntity: {
+          type: "string",
+          description: "Your entity identifier for visibility filtering (required)",
         },
         type: {
           type: "string",
@@ -139,7 +161,7 @@ const tools = [
           description: "End date filter in ISO format (e.g., 2024-12-31)",
         },
       },
-      required: ["query"],
+      required: ["query", "asEntity"],
     },
   },
 ];

@@ -24,7 +24,18 @@ describe("handleForget", () => {
     const parsed = JSON.parse(result);
 
     expect(parsed.success).toBe(true);
-    expect(mockDeleteMemory).toHaveBeenCalledWith("mem_123");
+    expect(mockDeleteMemory).toHaveBeenCalledWith("mem_123", undefined);
+  });
+
+  test("deletes memory with asEntity for ownership check", async () => {
+    const input: ForgetInput = {
+      id: "mem_123",
+      asEntity: "test-agent",
+    };
+
+    await handleForget(input);
+
+    expect(mockDeleteMemory).toHaveBeenCalledWith("mem_123", "test-agent");
   });
 
   test("returns success message", async () => {
@@ -72,7 +83,7 @@ describe("handleForget", () => {
       const result = await handleForget({ id });
       const parsed = JSON.parse(result);
 
-      expect(mockDeleteMemory).toHaveBeenCalledWith(id);
+      expect(mockDeleteMemory).toHaveBeenCalledWith(id, undefined);
       expect(parsed.message).toContain(id);
     }
   });

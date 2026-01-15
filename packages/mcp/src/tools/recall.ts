@@ -2,12 +2,13 @@ import { getApiClient } from "../services/api-client.js";
 
 export interface RecallInput {
   id: string;
+  asEntity?: string;
 }
 
 export async function handleRecall(input: RecallInput): Promise<string> {
   const apiClient = getApiClient();
 
-  const memory = await apiClient.getMemory(input.id);
+  const memory = await apiClient.getMemory(input.id, input.asEntity);
 
   return JSON.stringify(
     {
@@ -20,6 +21,8 @@ export async function handleRecall(input: RecallInput): Promise<string> {
         createdBy: memory.createdBy,
         createdAt: memory.createdAt,
         updatedAt: memory.updatedAt,
+        visibility: memory.visibility,
+        sharedWith: memory.sharedWith,
       },
     },
     null,

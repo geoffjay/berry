@@ -28,6 +28,7 @@ describe("handleRemember", () => {
   test("creates memory with minimal input", async () => {
     const input: RememberInput = {
       content: "Test memory content",
+      createdBy: "test-agent",
     };
 
     const result = await handleRemember(input);
@@ -44,6 +45,8 @@ describe("handleRemember", () => {
       type: "question",
       tags: ["important", "work"],
       createdBy: "test-user",
+      visibility: "shared",
+      sharedWith: ["other-agent"],
     };
 
     const result = await handleRemember(input);
@@ -55,12 +58,15 @@ describe("handleRemember", () => {
       type: "question",
       tags: ["important", "work"],
       createdBy: "test-user",
+      visibility: "shared",
+      sharedWith: ["other-agent"],
     });
   });
 
   test("returns JSON-formatted response", async () => {
     const input: RememberInput = {
       content: "Test content",
+      createdBy: "test-agent",
     };
 
     const result = await handleRemember(input);
@@ -75,6 +81,7 @@ describe("handleRemember", () => {
   test("includes memory details in response", async () => {
     const input: RememberInput = {
       content: "Test content",
+      createdBy: "test-agent",
     };
 
     const result = await handleRemember(input);
@@ -89,11 +96,25 @@ describe("handleRemember", () => {
     expect(parsed.memory.createdAt).toBeDefined();
   });
 
+  test("rejects when createdBy is missing", async () => {
+    const input = {
+      content: "Test content",
+      createdBy: "",
+    } as RememberInput;
+
+    const result = await handleRemember(input);
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.error).toContain("createdBy is required");
+  });
+
   test("propagates API errors", async () => {
     mockCreateMemory.mockImplementationOnce(() => Promise.reject(new Error("API error")));
 
     const input: RememberInput = {
       content: "Test content",
+      createdBy: "test-agent",
     };
 
     await expect(handleRemember(input)).rejects.toThrow("API error");
@@ -107,6 +128,7 @@ describe("RememberInput type", () => {
     types.forEach((type) => {
       const input: RememberInput = {
         content: "Test",
+        createdBy: "test-agent",
         type,
       };
       expect(input.type).toBe(type);
@@ -116,10 +138,12 @@ describe("RememberInput type", () => {
   test("allows optional fields to be undefined", () => {
     const input: RememberInput = {
       content: "Test",
+      createdBy: "test-agent",
     };
 
     expect(input.type).toBeUndefined();
     expect(input.tags).toBeUndefined();
-    expect(input.createdBy).toBeUndefined();
+    expect(input.visibility).toBeUndefined();
+    expect(input.sharedWith).toBeUndefined();
   });
 });

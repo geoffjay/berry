@@ -7,6 +7,11 @@ import { logRequest, logResponse, debug, error as logError } from "./logger";
 export type MemoryType = "question" | "request" | "information";
 
 /**
+ * Visibility levels for memory access control
+ */
+export type VisibilityLevel = "private" | "shared" | "public";
+
+/**
  * Server memory metadata format
  */
 interface ServerMemoryMetadata {
@@ -16,6 +21,9 @@ interface ServerMemoryMetadata {
   response?: string;
   respondedAt?: string;
   tags?: string[];
+  owner?: string;
+  visibility?: VisibilityLevel;
+  sharedWith?: string[];
 }
 
 /**
@@ -52,6 +60,8 @@ interface ServerSearchRequest {
     };
   };
   limit?: number;
+  asEntity?: string;
+  adminAccess?: boolean;
 }
 
 /**
@@ -65,6 +75,9 @@ export interface Memory {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  owner?: string;
+  visibility?: VisibilityLevel;
+  sharedWith?: string[];
 }
 
 /**
@@ -74,7 +87,9 @@ export interface CreateMemoryRequest {
   content: string;
   type?: MemoryType;
   tags?: string[];
-  createdBy?: string;
+  createdBy: string;
+  visibility?: VisibilityLevel;
+  sharedWith?: string[];
 }
 
 /**
@@ -82,6 +97,7 @@ export interface CreateMemoryRequest {
  */
 export interface SearchMemoriesRequest {
   query: string;
+  asEntity: string;
   type?: MemoryType;
   tags?: string[];
   limit?: number;
@@ -149,6 +165,9 @@ export class ApiClient {
       metadata: {
         createdBy: request.createdBy,
         tags: request.tags,
+        owner: request.createdBy, // owner defaults to createdBy
+        visibility: request.visibility,
+        sharedWith: request.sharedWith,
       },
     };
 
@@ -167,10 +186,13 @@ export class ApiClient {
   /**
    * Get a memory by ID
    */
-  async getMemory(id: string): Promise<Memory> {
-    const response = await this.request<ApiResponse<ServerMemory>>(
-      `/v1/memory/${encodeURIComponent(id)}`
-    );
+  async getMemory(id: string, asEntity?: string): Promise<Memory> {
+    let url = `/v1/memory/${encodeURIComponent(id)}`;
+    if (asEntity) {
+      url += `?asEntity=${encodeURIComponent(asEntity)}`;
+    }
+
+    const response = await this.request<ApiResponse<ServerMemory>>(url);
 
     if (!response.success || !response.data) {
       throw new ApiClientError(response.error || "Memory not found", 404);
@@ -182,11 +204,13 @@ export class ApiClient {
   /**
    * Delete a memory by ID
    */
-  async deleteMemory(id: string): Promise<void> {
-    const response = await this.request<ApiResponse<{ id: string }>>(
-      `/v1/memory/${encodeURIComponent(id)}`,
-      { method: "DELETE" }
-    );
+  async deleteMemory(id: string, asEntity?: string): Promise<void> {
+    let url = `/v1/memory/${encodeURIComponent(id)}`;
+    if (asEntity) {
+      url += `?asEntity=${encodeURIComponent(asEntity)}`;
+    }
+
+    const response = await this.request<ApiResponse<{ id: string }>>(url, { method: "DELETE" });
 
     if (!response.success) {
       throw new ApiClientError(response.error || "Failed to delete memory");
@@ -201,6 +225,7 @@ export class ApiClient {
       query: request.query,
       limit: request.limit,
       filters: {},
+      asEntity: request.asEntity,
     };
 
     if (request.type) {
@@ -243,6 +268,9 @@ export class ApiClient {
       createdBy: serverMemory.metadata.createdBy || "unknown",
       createdAt: serverMemory.metadata.createdAt,
       updatedAt: serverMemory.metadata.respondedAt || serverMemory.metadata.createdAt,
+      owner: serverMemory.metadata.owner,
+      visibility: serverMemory.metadata.visibility,
+      sharedWith: serverMemory.metadata.sharedWith,
     };
   }
 

@@ -8,6 +8,16 @@
 export type MemoryType = "question" | "request" | "information";
 
 /**
+ * Visibility levels for memory access control
+ */
+export type VisibilityLevel = "private" | "shared" | "public";
+
+/**
+ * Special entity identifier for the human owner who has admin access
+ */
+export const HUMAN_OWNER_ID = "human";
+
+/**
  * Metadata associated with a memory
  */
 export interface MemoryMetadata {
@@ -25,6 +35,12 @@ export interface MemoryMetadata {
   tags?: string[];
   /** References to other memory IDs that this memory relates to */
   references?: string[];
+  /** Primary owner of this memory (required for new memories, falls back to createdBy for legacy) */
+  owner?: string;
+  /** Visibility level for access control (defaults to "public" for backwards compatibility) */
+  visibility?: VisibilityLevel;
+  /** Entity IDs that can access this memory (only relevant for "shared" visibility) */
+  sharedWith?: string[];
 }
 
 /**
@@ -51,6 +67,12 @@ export interface CreateMemoryRequest {
     createdBy?: string;
     tags?: string[];
     references?: string[];
+    /** Primary owner of this memory (required for agent-created memories) */
+    owner?: string;
+    /** Visibility level (defaults to "public") */
+    visibility?: VisibilityLevel;
+    /** Entity IDs that can access this memory (for "shared" visibility) */
+    sharedWith?: string[];
   };
 }
 
@@ -78,6 +100,16 @@ export interface SearchFilters {
   references?: string[];
   /** Filter by date range */
   dateRange?: DateRangeFilter;
+}
+
+/**
+ * Visibility context for access control during queries
+ */
+export interface VisibilityContext {
+  /** The entity performing the query (for visibility filtering) */
+  asEntity: string;
+  /** If true, bypass visibility checks (only valid for HUMAN_OWNER_ID) */
+  adminAccess?: boolean;
 }
 
 /**

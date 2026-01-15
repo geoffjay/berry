@@ -12,7 +12,10 @@ import type {
   MemoryMetadata,
   CreateMemoryRequest,
   SearchMemoriesRequest,
+  VisibilityContext,
+  VisibilityLevel,
 } from "../types";
+import { HUMAN_OWNER_ID } from "../types";
 
 const COLLECTION_NAME = "memories";
 
@@ -92,6 +95,11 @@ export class ChromaDBService {
       references: chromaMetadata.references
         ? JSON.parse(chromaMetadata.references as string)
         : undefined,
+      owner: chromaMetadata.owner as string | undefined,
+      visibility: chromaMetadata.visibility as VisibilityLevel | undefined,
+      sharedWith: chromaMetadata.sharedWith
+        ? JSON.parse(chromaMetadata.sharedWith as string)
+        : undefined,
     };
   }
 
@@ -128,6 +136,16 @@ export class ChromaDBService {
       // Store references as JSON string since ChromaDB doesn't support arrays
       chromaMetadata.references = JSON.stringify(metadata.references);
     }
+    if (metadata.owner) {
+      chromaMetadata.owner = metadata.owner;
+    }
+    if (metadata.visibility) {
+      chromaMetadata.visibility = metadata.visibility;
+    }
+    if (metadata.sharedWith && metadata.sharedWith.length > 0) {
+      // Store sharedWith as JSON string since ChromaDB doesn't support arrays
+      chromaMetadata.sharedWith = JSON.stringify(metadata.sharedWith);
+    }
 
     return chromaMetadata;
   }
@@ -141,11 +159,17 @@ export class ChromaDBService {
     const id = this.generateId();
     const createdAt = new Date().toISOString();
 
+    // Determine owner: use explicit owner, fall back to createdBy
+    const owner = request.metadata?.owner || request.metadata?.createdBy;
+
     const metadata: MemoryMetadata = {
       createdAt,
       createdBy: request.metadata?.createdBy,
       tags: request.metadata?.tags,
       references: request.metadata?.references,
+      owner,
+      visibility: request.metadata?.visibility || "public",
+      sharedWith: request.metadata?.sharedWith,
     };
 
     const chromaMetadata = this.toChromaMetadata(request.type, metadata);
@@ -253,13 +277,107 @@ export class ChromaDBService {
   }
 
   /**
+   * Build visibility filter for WHERE clause
+   * Note: This handles public/private filtering; sharedWith requires post-query filtering
+   */
+  private buildVisibilityFilter(
+    visibilityContext: VisibilityContext
+  ): Record<string, unknown> | undefined {
+    const { asEntity, adminAccess } = visibilityContext;
+
+    // Human admin bypass - no visibility filter needed
+    if (asEntity === HUMAN_OWNER_ID && adminAccess) {
+      return undefined;
+    }
+
+    // Build OR conditions for visibility access:
+    // 1. Public memories (explicit visibility)
+    // 2. Private memories owned by this entity
+    // 3. Shared memories owned by this entity (sharedWith checked post-query)
+    // Note: Legacy memories without visibility field are handled post-query
+    const visibilityConditions: Record<string, unknown>[] = [
+      // Public memories
+      { visibility: { $eq: "public" } },
+      // Private memories owned by this entity
+      {
+        $and: [{ visibility: { $eq: "private" } }, { owner: { $eq: asEntity } }],
+      },
+      // Shared memories - include all shared, filter by sharedWith post-query
+      { visibility: { $eq: "shared" } },
+    ];
+
+    return { $or: visibilityConditions };
+  }
+
+  /**
+   * Check if an entity has access to a specific memory
+   */
+  checkMemoryAccess(memory: Memory, asEntity: string, adminAccess: boolean = false): boolean {
+    // Human admin bypass
+    if (asEntity === HUMAN_OWNER_ID && adminAccess) {
+      return true;
+    }
+
+    const visibility = memory.metadata.visibility;
+    const owner = memory.metadata.owner || memory.metadata.createdBy;
+
+    // Legacy memories without visibility are treated as public
+    if (!visibility) {
+      return true;
+    }
+
+    switch (visibility) {
+      case "public":
+        return true;
+      case "private":
+        return owner === asEntity;
+      case "shared":
+        if (owner === asEntity) return true;
+        const sharedWith = memory.metadata.sharedWith || [];
+        return sharedWith.includes(asEntity);
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Filter memories by visibility access (post-query filter)
+   */
+  private filterByVisibility(
+    memories: Memory[],
+    visibilityContext: VisibilityContext
+  ): Memory[] {
+    const { asEntity, adminAccess } = visibilityContext;
+
+    // Human admin bypass
+    if (asEntity === HUMAN_OWNER_ID && adminAccess) {
+      return memories;
+    }
+
+    return memories.filter((memory) => this.checkMemoryAccess(memory, asEntity, adminAccess));
+  }
+
+  /**
    * Search memories by content and/or metadata filters
    */
-  async searchMemories(request: SearchMemoriesRequest): Promise<Memory[]> {
+  async searchMemories(
+    request: SearchMemoriesRequest,
+    visibilityContext?: VisibilityContext
+  ): Promise<Memory[]> {
     const collection = this.ensureCollection();
 
-    const limit = request.limit || 10;
-    const whereClause = this.buildWhereClause(request);
+    // Over-fetch when visibility filtering is applied since post-query filtering may reduce results
+    const requestedLimit = request.limit || 10;
+    const limit = visibilityContext ? requestedLimit * 3 : requestedLimit;
+
+    // Build combined WHERE clause with visibility filtering
+    let whereClause = this.buildWhereClause(request);
+    if (visibilityContext) {
+      const visibilityFilter = this.buildVisibilityFilter(visibilityContext);
+      if (visibilityFilter) {
+        whereClause = whereClause ? { $and: [whereClause, visibilityFilter] } : visibilityFilter;
+      }
+    }
 
     let results: {
       ids: string[][];
@@ -334,7 +452,50 @@ export class ChromaDBService {
       });
     }
 
-    return memories;
+    // Apply visibility post-filtering (for sharedWith access and legacy memories)
+    let filteredMemories = memories;
+    if (visibilityContext) {
+      filteredMemories = this.filterByVisibility(memories, visibilityContext);
+    }
+
+    // Trim to requested limit
+    return filteredMemories.slice(0, requestedLimit);
+  }
+
+  /**
+   * Update visibility settings for a memory
+   */
+  async updateVisibility(
+    id: string,
+    visibility: VisibilityLevel,
+    sharedWith?: string[]
+  ): Promise<Memory | null> {
+    const collection = this.ensureCollection();
+
+    // Get existing memory
+    const memory = await this.getMemory(id);
+    if (!memory) {
+      return null;
+    }
+
+    // Update metadata
+    const updatedMetadata: MemoryMetadata = {
+      ...memory.metadata,
+      visibility,
+      sharedWith,
+    };
+
+    const chromaMetadata = this.toChromaMetadata(memory.type, updatedMetadata);
+
+    await collection.update({
+      ids: [id],
+      metadatas: [chromaMetadata],
+    });
+
+    return {
+      ...memory,
+      metadata: updatedMetadata,
+    };
   }
 
   /**
