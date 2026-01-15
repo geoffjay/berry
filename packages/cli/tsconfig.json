@@ -2,15 +2,15 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": false,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "noEmit": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": false,
-    "types": ["node", "bun"]
+    "types": ["node", "bun"],
+    "paths": {
+      "@berry/server": ["../server/src/index.ts"],
+      "@berry/mcp": ["../mcp/src/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

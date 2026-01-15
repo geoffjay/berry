@@ -102,7 +102,7 @@ The CLI and MCP server both use a common configuration file for settings. The co
 
 #### Configuration
 
-Create a file called `berry.plist` in `~/Library/LaunchAgents` with the following contents:
+Create a file called `com.berry.server.plist` in `~/Library/LaunchAgents` with the following contents:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
