@@ -2,7 +2,7 @@ import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import { ChromaDBService } from "./chromadb";
 
 // Mock the ChromaDB client modules
-const mockCollection = {
+const mockCollection: Record<string, ReturnType<typeof mock>> = {
   add: mock(() => Promise.resolve()),
   get: mock(() =>
     Promise.resolve({
@@ -19,6 +19,7 @@ const mockCollection = {
     })
   ),
   delete: mock(() => Promise.resolve()),
+  update: mock(() => Promise.resolve()),
   query: mock(() =>
     Promise.resolve({
       ids: [["mem_123", "mem_456"]],
@@ -76,6 +77,7 @@ describe("ChromaDBService", () => {
     mockCollection.add.mockClear();
     mockCollection.get.mockClear();
     mockCollection.delete.mockClear();
+    mockCollection.update.mockClear();
     mockCollection.query.mockClear();
     mockClient.getOrCreateCollection.mockClear();
     mockClient.heartbeat.mockClear();
@@ -408,6 +410,333 @@ describe("ChromaDBService", () => {
       const result = await service.healthCheck();
       expect(result).toBe(false);
     });
+  });
+});
+
+describe("checkMemoryAccess", () => {
+  let service: ChromaDBService;
+
+  beforeEach(async () => {
+    service = new ChromaDBService();
+    await service.initialize();
+  });
+
+  test("allows access to public memories", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "public" as const,
+        owner: "owner1",
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "anyone")).toBe(true);
+  });
+
+  test("allows owner access to private memories", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "private" as const,
+        owner: "owner1",
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "owner1")).toBe(true);
+  });
+
+  test("denies non-owner access to private memories", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "private" as const,
+        owner: "owner1",
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "other_user")).toBe(false);
+  });
+
+  test("allows access to shared memories for sharedWith actors", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "shared" as const,
+        owner: "owner1",
+        sharedWith: ["user2", "user3"],
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "user2")).toBe(true);
+    expect(service.checkMemoryAccess(memory, "user3")).toBe(true);
+  });
+
+  test("denies access to shared memories for non-shared actors", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "shared" as const,
+        owner: "owner1",
+        sharedWith: ["user2"],
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "user4")).toBe(false);
+  });
+
+  test("allows owner access to shared memories", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "shared" as const,
+        owner: "owner1",
+        sharedWith: ["user2"],
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "owner1")).toBe(true);
+  });
+
+  test("allows human admin bypass with adminAccess flag", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "private" as const,
+        owner: "owner1",
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "human", true)).toBe(true);
+  });
+
+  test("treats legacy memories without visibility as public", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        createdBy: "owner1",
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "anyone")).toBe(true);
+  });
+
+  test("falls back to createdBy when owner is not set", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "private" as const,
+        createdBy: "creator1",
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "creator1")).toBe(true);
+    expect(service.checkMemoryAccess(memory, "other")).toBe(false);
+  });
+
+  test("handles empty sharedWith array", () => {
+    const memory = {
+      id: "mem_1",
+      content: "test",
+      type: "information" as const,
+      metadata: {
+        createdAt: "2024-01-01",
+        visibility: "shared" as const,
+        owner: "owner1",
+        sharedWith: [],
+      },
+    };
+
+    expect(service.checkMemoryAccess(memory, "other")).toBe(false);
+  });
+});
+
+describe("updateVisibility", () => {
+  let service: ChromaDBService;
+
+  beforeEach(async () => {
+    service = new ChromaDBService();
+    await service.initialize();
+  });
+
+  test("updates visibility to private", async () => {
+    mockCollection.get.mockImplementationOnce(() =>
+      Promise.resolve({
+        ids: ["mem_123"],
+        documents: ["test content"],
+        metadatas: [
+          {
+            type: "information",
+            createdAt: "2024-01-01T00:00:00.000Z",
+            visibility: "public",
+            owner: "user1",
+          },
+        ],
+      })
+    );
+
+    const result = await service.updateVisibility("mem_123", "private");
+
+    expect(result).not.toBeNull();
+    expect(result?.metadata.visibility).toBe("private");
+    expect(mockCollection.update).toHaveBeenCalled();
+  });
+
+  test("updates visibility to shared with sharedWith list", async () => {
+    mockCollection.get.mockImplementationOnce(() =>
+      Promise.resolve({
+        ids: ["mem_123"],
+        documents: ["test content"],
+        metadatas: [
+          {
+            type: "information",
+            createdAt: "2024-01-01T00:00:00.000Z",
+            visibility: "public",
+            owner: "user1",
+          },
+        ],
+      })
+    );
+
+    const result = await service.updateVisibility("mem_123", "shared", ["user2", "user3"]);
+
+    expect(result).not.toBeNull();
+    expect(result?.metadata.visibility).toBe("shared");
+    expect(result?.metadata.sharedWith).toEqual(["user2", "user3"]);
+  });
+
+  test("returns null for non-existent memory", async () => {
+    mockCollection.get.mockImplementationOnce(() =>
+      Promise.resolve({
+        ids: [],
+        documents: [],
+        metadatas: [],
+      })
+    );
+
+    const result = await service.updateVisibility("non_existent", "private");
+    expect(result).toBeNull();
+  });
+});
+
+describe("searchMemories with visibility context", () => {
+  let service: ChromaDBService;
+
+  beforeEach(async () => {
+    service = new ChromaDBService();
+    await service.initialize();
+  });
+
+  test("filters results by visibility context", async () => {
+    mockCollection.query.mockImplementationOnce(() =>
+      Promise.resolve({
+        ids: [["mem_1", "mem_2", "mem_3"]],
+        documents: [["public content", "private content", "shared content"]],
+        metadatas: [
+          [
+            {
+              type: "information",
+              createdAt: "2024-01-01",
+              visibility: "public",
+              owner: "owner1",
+            },
+            {
+              type: "information",
+              createdAt: "2024-01-02",
+              visibility: "private",
+              owner: "owner1",
+            },
+            {
+              type: "information",
+              createdAt: "2024-01-03",
+              visibility: "shared",
+              owner: "owner1",
+              sharedWith: '["user2"]',
+            },
+          ],
+        ],
+      })
+    );
+
+    const results = await service.searchMemories(
+      { query: "test" },
+      { asActor: "user2", adminAccess: false }
+    );
+
+    // user2 should see: public, shared (they're in sharedWith)
+    expect(results.some((r) => r.metadata.visibility === "public")).toBe(true);
+    expect(results.some((r) => r.metadata.visibility === "shared")).toBe(true);
+    expect(results.some((r) => r.metadata.visibility === "private")).toBe(false);
+  });
+
+  test("human admin bypasses visibility filters", async () => {
+    mockCollection.query.mockImplementationOnce(() =>
+      Promise.resolve({
+        ids: [["mem_1", "mem_2"]],
+        documents: [["public content", "private content"]],
+        metadatas: [
+          [
+            {
+              type: "information",
+              createdAt: "2024-01-01",
+              visibility: "public",
+              owner: "owner1",
+            },
+            {
+              type: "information",
+              createdAt: "2024-01-02",
+              visibility: "private",
+              owner: "owner1",
+            },
+          ],
+        ],
+      })
+    );
+
+    const results = await service.searchMemories(
+      { query: "test" },
+      { asActor: "human", adminAccess: true }
+    );
+
+    // Human admin should see all memories
+    expect(results).toHaveLength(2);
+  });
+
+  test("over-fetches when visibility filtering is applied", async () => {
+    // Clear query mock to get clean call tracking
+    mockCollection.query.mockClear();
+
+    await service.searchMemories({ query: "test", limit: 5 }, { asActor: "user1" });
+
+    // Should request 15 (5 * 3) to account for post-filtering
+    const calls = mockCollection.query.mock.calls as unknown as Array<[{ nResults?: number }]>;
+    expect(calls[0]?.[0]?.nResults).toBe(15);
   });
 });
 
