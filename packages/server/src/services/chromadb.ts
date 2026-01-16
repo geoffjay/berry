@@ -343,10 +343,7 @@ export class ChromaDBService {
   /**
    * Filter memories by visibility access (post-query filter)
    */
-  private filterByVisibility(
-    memories: Memory[],
-    visibilityContext: VisibilityContext
-  ): Memory[] {
+  private filterByVisibility(memories: Memory[], visibilityContext: VisibilityContext): Memory[] {
     const { asActor, adminAccess } = visibilityContext;
 
     // Human admin bypass

@@ -191,7 +191,9 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      await expect(client.createMemory({ content: "Test", createdBy: "test-agent" })).rejects.toThrow("Validation failed");
+      await expect(
+        client.createMemory({ content: "Test", createdBy: "test-agent" })
+      ).rejects.toThrow("Validation failed");
     });
   });
 
@@ -366,7 +368,11 @@ describe("ApiClient", () => {
         } as Response);
       });
 
-      await client.searchMemories({ query: "test", asActor: "test-agent", tags: ["important", "work"] });
+      await client.searchMemories({
+        query: "test",
+        asActor: "test-agent",
+        tags: ["important", "work"],
+      });
     });
 
     test("includes date range filter in request", async () => {
@@ -406,7 +412,9 @@ describe("ApiClient", () => {
         } as Response)
       );
 
-      await expect(client.searchMemories({ query: "test", asActor: "test-agent" })).rejects.toThrow("Search failed");
+      await expect(client.searchMemories({ query: "test", asActor: "test-agent" })).rejects.toThrow(
+        "Search failed"
+      );
     });
   });
 

@@ -113,7 +113,8 @@ await yargs(hideBin(process.argv))
         .option("as-actor", {
           alias: "a",
           type: "string",
-          description: "Actor ID for visibility filtering (see only memories accessible to this actor)",
+          description:
+            "Actor ID for visibility filtering (see only memories accessible to this actor)",
         })
         .option("type", {
           alias: "t",

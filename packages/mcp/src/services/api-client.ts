@@ -1,131 +1,20 @@
 import { getConfig } from "./config";
 import { logRequest, logResponse, debug, error as logError } from "./logger";
+import type {
+  Memory,
+  CreateMemoryRequest,
+  SearchMemoriesRequest,
+  SearchResult,
+  ApiResponse,
+  ServerMemory,
+  ServerSearchRequest,
+} from "@berry/types";
+import { ApiClientError } from "@berry/types";
 
-/**
- * Memory types supported by Berry
- */
-export type MemoryType = "question" | "request" | "information";
-
-/**
- * Visibility levels for memory access control
- */
-export type VisibilityLevel = "private" | "shared" | "public";
-
-/**
- * Server memory metadata format
- */
-interface ServerMemoryMetadata {
-  createdAt: string;
-  createdBy?: string;
-  respondedBy?: string;
-  response?: string;
-  respondedAt?: string;
-  tags?: string[];
-  owner?: string;
-  visibility?: VisibilityLevel;
-  sharedWith?: string[];
-}
-
-/**
- * Memory format returned from the server
- */
-interface ServerMemory {
-  id: string;
-  content: string;
-  type: MemoryType;
-  metadata: ServerMemoryMetadata;
-}
-
-/**
- * Server API response wrapper
- */
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-/**
- * Server search request format
- */
-interface ServerSearchRequest {
-  query?: string;
-  filters?: {
-    type?: MemoryType;
-    createdBy?: string;
-    tags?: string[];
-    dateRange?: {
-      from?: string;
-      to?: string;
-    };
-  };
-  limit?: number;
-  asActor?: string;
-  adminAccess?: boolean;
-}
-
-/**
- * Memory object returned from the API (client format)
- */
-export interface Memory {
-  id: string;
-  content: string;
-  type: MemoryType;
-  tags: string[];
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  owner?: string;
-  visibility?: VisibilityLevel;
-  sharedWith?: string[];
-}
-
-/**
- * Request payload for creating a memory
- */
-export interface CreateMemoryRequest {
-  content: string;
-  type?: MemoryType;
-  tags?: string[];
-  createdBy: string;
-  visibility?: VisibilityLevel;
-  sharedWith?: string[];
-}
-
-/**
- * Request payload for searching memories
- */
-export interface SearchMemoriesRequest {
-  query: string;
-  asActor: string;
-  type?: MemoryType;
-  tags?: string[];
-  limit?: number;
-  from?: string;
-  to?: string;
-}
-
-/**
- * Search result with similarity score
- */
-export interface SearchResult {
-  memory: Memory;
-  score: number;
-}
-
-/**
- * Custom error class for API errors
- */
-export class ApiClientError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-    public readonly code?: string
-  ) {
-    super(message);
-    this.name = "ApiClientError";
-  }
-}
+// Re-export types for consumers
+export type { Memory, CreateMemoryRequest, SearchMemoriesRequest, SearchResult };
+export type { VisibilityLevel, MemoryType } from "@berry/types";
+export { ApiClientError };
 
 /**
  * Get API client configuration from the Berry config file

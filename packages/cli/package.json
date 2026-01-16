@@ -15,6 +15,7 @@
     "@berry/mcp": "workspace:*",
     "@berry/script": "workspace:*",
     "@berry/server": "workspace:*",
+    "@berry/types": "workspace:*",
     "@inquirer/prompts": "^7.0.0",
     "@parcel/watcher": "^2.5.4",
     "jsonc-parser": "^3.3.1",

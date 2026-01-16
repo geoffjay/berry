@@ -2,23 +2,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parse, ParseError, printParseErrorCode } from "jsonc-parser";
+import type { BerryConfig } from "@berry/types";
 
-/**
- * Configuration schema for Berry
- * Shared with CLI - reads from ~/.config/berry/config.jsonc
- */
-export interface BerryConfig {
-  server: {
-    url: string;
-    timeout: number;
-  };
-  defaults: {
-    type: MemoryType;
-    createdBy: string;
-  };
-}
-
-export type MemoryType = "question" | "request" | "information";
+// Re-export types for consumers
+export type { BerryConfig, MemoryType } from "@berry/types";
 
 /**
  * Default configuration values

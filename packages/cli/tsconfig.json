@@ -9,7 +9,8 @@
     "types": ["node", "bun"],
     "paths": {
       "@berry/server": ["../server/src/index.ts"],
-      "@berry/mcp": ["../mcp/src/index.ts"]
+      "@berry/mcp": ["../mcp/src/index.ts"],
+      "@berry/types": ["../types/src/index.ts"]
     }
   },
   "include": ["src/**/*"]
