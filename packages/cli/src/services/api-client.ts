@@ -66,12 +66,19 @@ export interface Memory {
 /**
  * Request payload for creating a memory
  */
+/**
+ * Visibility levels for memory access control
+ */
+export type VisibilityLevel = "private" | "shared" | "public";
+
 export interface CreateMemoryRequest {
   content: string;
   type?: MemoryType;
   tags?: string[];
   createdBy?: string;
   references?: string[];
+  visibility?: VisibilityLevel;
+  sharedWith?: string[];
 }
 
 /**
@@ -141,6 +148,8 @@ export class ApiClient {
         createdBy: request.createdBy,
         tags: request.tags,
         references: request.references,
+        visibility: request.visibility,
+        sharedWith: request.sharedWith,
       },
     };
 

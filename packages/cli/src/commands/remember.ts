@@ -9,6 +9,8 @@ export interface RememberOptions {
   tags?: string;
   by?: string;
   references?: string;
+  visibility?: string;
+  sharedWith?: string;
 }
 
 /**
@@ -77,6 +79,54 @@ export async function rememberCommand(options: RememberOptions): Promise<void> {
   // Get creator
   const createdBy = options.by ?? config.defaults.createdBy;
 
+  // Get visibility from flags or prompt if running interactively
+  const validVisibilities = ["private", "shared", "public"];
+  let visibility: "private" | "shared" | "public" | undefined;
+  if (options.visibility) {
+    if (!validVisibilities.includes(options.visibility)) {
+      console.error(
+        `Invalid visibility: ${options.visibility}. Must be one of: private, shared, public`
+      );
+      process.exit(1);
+    }
+    visibility = options.visibility as "private" | "shared" | "public";
+  } else if (!options.content) {
+    // Prompt for visibility in interactive mode
+    visibility = (await select({
+      message: "Who can access this memory?",
+      choices: [
+        { value: "public", name: "Public - Anyone can see it" },
+        { value: "private", name: "Private - Only you can see it" },
+        { value: "shared", name: "Shared - You and specific actors can see it" },
+      ],
+      default: "public",
+    })) as "private" | "shared" | "public";
+  }
+
+  // Parse or prompt for sharedWith
+  let sharedWith: string[] | undefined;
+  if (options.sharedWith) {
+    sharedWith = options.sharedWith
+      .split(",")
+      .map((actor) => actor.trim())
+      .filter(Boolean);
+  } else if (!options.content && visibility === "shared") {
+    // Prompt for sharedWith in interactive mode when visibility is shared
+    const sharedWithInput = await input({
+      message: "Enter actor IDs to share with (comma-separated):",
+      validate: (value: string) => {
+        if (!value.trim()) {
+          return "At least one actor ID is required for shared visibility";
+        }
+        return true;
+      },
+    });
+    sharedWith = sharedWithInput
+      .split(",")
+      .map((actor) => actor.trim())
+      .filter(Boolean);
+  }
+
   // Submit the memory
   const spinner = ora("Saving memory...").start();
 
@@ -87,6 +137,8 @@ export async function rememberCommand(options: RememberOptions): Promise<void> {
       tags,
       createdBy,
       references,
+      visibility,
+      sharedWith,
     });
 
     spinner.succeed("Memory saved successfully!");

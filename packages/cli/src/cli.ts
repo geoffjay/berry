@@ -51,6 +51,16 @@ await yargs(hideBin(process.argv))
           alias: "r",
           type: "string",
           description: "Comma-separated memory IDs to reference",
+        })
+        .option("visibility", {
+          alias: "v",
+          type: "string",
+          description: "Visibility level (private/shared/public)",
+          choices: ["private", "shared", "public"] as const,
+        })
+        .option("shared-with", {
+          type: "string",
+          description: "Comma-separated actor IDs to share with (for shared visibility)",
         }),
     async (argv) => {
       await rememberCommand({
@@ -59,6 +69,8 @@ await yargs(hideBin(process.argv))
         tags: argv.tags,
         by: argv.by,
         references: argv.references,
+        visibility: argv.visibility,
+        sharedWith: argv["shared-with"],
       });
     }
   )
