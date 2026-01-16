@@ -1,5 +1,20 @@
 # @berry/cli
 
+## 1.7.0
+
+### Minor Changes
+
+- [`5f0da65`](https://github.com/geoffjay/berry/commit/5f0da655797f3ba0f830e362afa3cde3012547f8) Thanks [@geoffjay](https://github.com/geoffjay)! - Add references support to CLI
+
+### Patch Changes
+
+- [`34ea6fc`](https://github.com/geoffjay/berry/commit/34ea6fcb9acc844172264f9e4105f9eaa148663b) Thanks [@geoffjay](https://github.com/geoffjay)! - Handle bin launch correctly
+
+- Updated dependencies [[`5f0da65`](https://github.com/geoffjay/berry/commit/5f0da655797f3ba0f830e362afa3cde3012547f8), [`34ea6fc`](https://github.com/geoffjay/berry/commit/34ea6fcb9acc844172264f9e4105f9eaa148663b)]:
+  - @berry/mcp@1.7.0
+  - @berry/script@1.7.0
+  - @berry/server@1.7.0
+
 ## 1.6.1
 
 ### Patch Changes
