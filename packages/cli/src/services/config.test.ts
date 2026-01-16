@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
-import { isValidMemoryType, getConfigPath, type BerryConfig } from "./config.js";
+import { describe, expect, test, beforeEach, afterEach } from "bun:test";
+import { isValidMemoryType, getConfigPath, loadConfig, type BerryConfig } from "./config.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -94,5 +94,37 @@ describe("Config defaults documentation", () => {
   test("default createdBy should be user", () => {
     const expectedDefault = "user";
     expect(expectedDefault).toBe("user");
+  });
+});
+
+describe("Environment variable overrides", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    delete process.env.BERRY_SERVER_URL;
+    delete process.env.BERRY_TIMEOUT;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  test("BERRY_SERVER_URL overrides config file server.url", () => {
+    process.env.BERRY_SERVER_URL = "http://custom:14114";
+    const config = loadConfig();
+    expect(config.server.url).toBe("http://custom:14114");
+  });
+
+  test("BERRY_TIMEOUT overrides config file server.timeout", () => {
+    process.env.BERRY_TIMEOUT = "10000";
+    const config = loadConfig();
+    expect(config.server.timeout).toBe(10000);
+  });
+
+  test("env vars take precedence over defaults when no config file", () => {
+    process.env.BERRY_SERVER_URL = "http://env-server:8080";
+    const config = loadConfig();
+    expect(config.server.url).toBe("http://env-server:8080");
   });
 });

@@ -1,0 +1,65 @@
+services:
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    container_name: berry-chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - berry-network
+
+  chromadb-admin:
+    image: fengzhichao/chromadb-admin:latest
+    container_name: berry-chromadb-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    networks:
+      - berry-network
+
+  berry-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: berry-server
+    restart: unless-stopped
+    ports:
+      - "14114:14114"
+    environment:
+      - PORT=14114
+      - CHROMA_URL=http://chromadb:8000
+      - CHROMA_PROVIDER=local
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:14114/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - berry-network
+
+volumes:
+  chromadb_data:
+    driver: local
+
+networks:
+  berry-network:
+    driver: bridge

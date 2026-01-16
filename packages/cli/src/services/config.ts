@@ -49,34 +49,38 @@ export function getConfigPath(): string {
  */
 export function loadConfig(): BerryConfig {
   const configPath = getConfigPath();
+  let config: BerryConfig;
 
   if (!existsSync(configPath)) {
-    return DEFAULT_CONFIG;
-  }
+    config = DEFAULT_CONFIG;
+  } else {
+    try {
+      const content = readFileSync(configPath, "utf-8");
+      const errors: ParseError[] = [];
+      const parsed = parse(content, errors, {
+        allowTrailingComma: true,
+        disallowComments: false,
+      });
 
-  try {
-    const content = readFileSync(configPath, "utf-8");
-    const errors: ParseError[] = [];
-    const parsed = parse(content, errors, {
-      allowTrailingComma: true,
-      disallowComments: false,
-    });
-
-    if (errors.length > 0) {
-      const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(", ");
-      console.warn(`Warning: Config file has parse errors: ${errorMessages}`);
+      if (errors.length > 0) {
+        const errorMessages = errors.map((e) => printParseErrorCode(e.error)).join(", ");
+        console.warn(`Warning: Config file has parse errors: ${errorMessages}`);
+        console.warn("Using default configuration.");
+        config = DEFAULT_CONFIG;
+      } else {
+        // Deep merge with defaults to ensure all required fields exist
+        config = mergeConfig(DEFAULT_CONFIG, parsed);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Warning: Failed to load config: ${message}`);
       console.warn("Using default configuration.");
-      return DEFAULT_CONFIG;
+      config = DEFAULT_CONFIG;
     }
-
-    // Deep merge with defaults to ensure all required fields exist
-    return mergeConfig(DEFAULT_CONFIG, parsed);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`Warning: Failed to load config: ${message}`);
-    console.warn("Using default configuration.");
-    return DEFAULT_CONFIG;
   }
+
+  // Apply environment variable overrides (env vars take precedence)
+  return applyEnvOverrides(config);
 }
 
 /**
@@ -91,6 +95,23 @@ function mergeConfig(defaults: BerryConfig, overrides: Partial<BerryConfig>): Be
     defaults: {
       ...defaults.defaults,
       ...overrides.defaults,
+    },
+  };
+}
+
+/**
+ * Apply environment variable overrides to config
+ * Environment variables take precedence over config file values
+ */
+function applyEnvOverrides(config: BerryConfig): BerryConfig {
+  return {
+    ...config,
+    server: {
+      ...config.server,
+      url: process.env.BERRY_SERVER_URL || config.server.url,
+      timeout: process.env.BERRY_TIMEOUT
+        ? parseInt(process.env.BERRY_TIMEOUT, 10)
+        : config.server.timeout,
     },
   };
 }

@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.bun/
+
+# Build outputs
+dist/
+*.tgz
+
+# Development
+.git/
+.github/
+.changeset/
+.claude/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+coverage/
+*.test.ts
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Packages we don't need in the server image
+packages/cli/
+packages/mcp/
+
+# Documentation
+*.md
+!README.md
