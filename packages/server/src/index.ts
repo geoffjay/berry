@@ -5,22 +5,28 @@
  */
 
 import { Hono, type Context } from "hono";
-import { logger } from "hono/logger";
 import { cors } from "hono/cors";
+import { honoLogger } from "@logtape/hono";
 import { memoryRoutes } from "./routes/memory";
 import { initializeChromaDB, getChromaDBService } from "./services/chromadb";
+import { initializeLogging, getServerLogger } from "./services/logger";
 import type { ApiResponse } from "./types";
 
 const app = new Hono();
 
-// Middleware
-app.use("*", logger());
+// Middleware - LogTape for structured logging, CORS for cross-origin requests
+app.use("*", honoLogger({ category: ["berry", "http"] }));
 app.use("*", cors());
 
 // Global error handler
 app.onError((err: Error, c: Context) => {
-  console.error(`Error: ${err.message}`);
-  console.error(err.stack);
+  const logger = getServerLogger("error");
+  logger.error("Unhandled error: {message}", {
+    message: err.message,
+    stack: err.stack,
+    path: c.req.path,
+    method: c.req.method,
+  });
 
   const response: ApiResponse<null> = {
     success: false,
@@ -70,21 +76,32 @@ export interface ServerOptions {
  * Start the Berry server
  */
 export async function startServer(options: ServerOptions = {}): Promise<void> {
+  // Initialize logging first
+  await initializeLogging();
+
+  const logger = getServerLogger();
   const port = options.port ?? parseInt(process.env.PORT || "3000", 10);
 
-  console.log("Initializing Berry server...");
-  console.log("Connecting to ChromaDB...");
+  logger.info("Initializing Berry server...");
+  logger.info("Connecting to ChromaDB...");
 
   try {
     await initializeChromaDB();
-    console.log("ChromaDB connection established.");
-    console.log(`Berry server is running at http://localhost:${port}`);
-    console.log("Available endpoints:");
-    console.log("  GET  /health         - Health check");
-    console.log("  GET  /v1/memory/:id  - Get memory by ID");
-    console.log("  POST /v1/memory      - Create new memory");
-    console.log("  DELETE /v1/memory/:id - Delete memory by ID");
-    console.log("  POST /v1/search      - Search memories");
+    logger.info("ChromaDB connection established");
+    logger.info("Berry server is running", {
+      url: `http://localhost:${port}`,
+      port,
+    });
+    logger.info("Available endpoints", {
+      endpoints: [
+        "GET  /health",
+        "GET  /v1/memory/:id",
+        "POST /v1/memory",
+        "DELETE /v1/memory/:id",
+        "PATCH /v1/memory/:id/visibility",
+        "POST /v1/search",
+      ],
+    });
 
     // Start the server and wait indefinitely
     Bun.serve({
@@ -95,7 +112,9 @@ export async function startServer(options: ServerOptions = {}): Promise<void> {
     // Keep the process running
     await new Promise(() => {});
   } catch (error) {
-    console.error("Failed to initialize ChromaDB:", error);
+    logger.error("Failed to initialize ChromaDB", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     process.exit(1);
   }
 }

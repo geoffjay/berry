@@ -4,6 +4,7 @@
 
 import { Hono, type Context } from "hono";
 import { getChromaDBService } from "../services/chromadb";
+import { getRouteLogger } from "../services/logger";
 import type {
   ApiResponse,
   Memory,
@@ -16,6 +17,7 @@ import type {
 import { HUMAN_OWNER_ID } from "../types";
 
 const memoryRoutes = new Hono();
+const logger = getRouteLogger();
 
 /**
  * Validate memory type
@@ -264,6 +266,10 @@ memoryRoutes.get("/v1/memory/:id", async (c: Context) => {
     };
     return c.json(response, 200);
   } catch (error) {
+    logger.error("Failed to retrieve memory", {
+      id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : "Failed to retrieve memory",
@@ -297,6 +303,9 @@ memoryRoutes.post("/v1/memory", async (c: Context) => {
     };
     return c.json(response, 201);
   } catch (error) {
+    logger.error("Failed to create memory", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create memory",
@@ -360,6 +369,10 @@ memoryRoutes.delete("/v1/memory/:id", async (c: Context) => {
     };
     return c.json(response, 200);
   } catch (error) {
+    logger.error("Failed to delete memory", {
+      id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete memory",
@@ -406,6 +419,9 @@ memoryRoutes.post("/v1/search", async (c: Context) => {
     };
     return c.json(response, 200);
   } catch (error) {
+    logger.error("Failed to search memories", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : "Failed to search memories",
@@ -501,6 +517,10 @@ memoryRoutes.patch("/v1/memory/:id/visibility", async (c: Context) => {
     };
     return c.json(response, 200);
   } catch (error) {
+    logger.error("Failed to update visibility", {
+      id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     const response: ApiResponse<null> = {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update visibility",

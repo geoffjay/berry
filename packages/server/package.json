@@ -12,6 +12,8 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@logtape/hono": "^2.0.0",
+    "@logtape/logtape": "^2.0.0",
     "chromadb": "^1.9.2",
     "chromadb-default-embed": "^2.14.0",
     "hono": "^4.6.0"

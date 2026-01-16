@@ -4,6 +4,7 @@
 
 import { ChromaClient, CloudClient, IncludeEnum } from "chromadb";
 import type { Collection } from "chromadb";
+import { getChromaLogger } from "./logger";
 
 type ChromaDBClient = ChromaClient | CloudClient;
 import type {
@@ -18,6 +19,7 @@ import type {
 import { HUMAN_OWNER_ID } from "../types";
 
 const COLLECTION_NAME = "memories";
+const logger = getChromaLogger();
 
 /**
  * ChromaDB service class for managing memory collections
@@ -40,14 +42,17 @@ export class ChromaDBService {
         );
       }
 
+      logger.info("Initializing ChromaDB cloud client", { tenant, database });
       this.client = new CloudClient({
         apiKey,
         tenant,
         database,
       });
     } else {
+      const url = chromaUrl || process.env.CHROMA_URL || "http://localhost:8000";
+      logger.info("Initializing ChromaDB local client", { url });
       this.client = new ChromaClient({
-        path: chromaUrl || process.env.CHROMA_URL || "http://localhost:8000",
+        path: url,
       });
     }
   }
@@ -56,12 +61,14 @@ export class ChromaDBService {
    * Initialize the ChromaDB connection and get/create the memories collection
    */
   async initialize(): Promise<void> {
+    logger.debug("Getting or creating collection", { collection: COLLECTION_NAME });
     this.collection = await this.client.getOrCreateCollection({
       name: COLLECTION_NAME,
       metadata: {
         description: "Berry memory storage collection",
       },
     });
+    logger.info("Collection initialized", { collection: COLLECTION_NAME });
   }
 
   /**
@@ -174,10 +181,23 @@ export class ChromaDBService {
 
     const chromaMetadata = this.toChromaMetadata(request.type, metadata);
 
+    logger.debug("Adding memory to collection", {
+      id,
+      type: request.type,
+      owner,
+      visibility: metadata.visibility,
+    });
+
     await collection.add({
       ids: [id],
       documents: [request.content],
       metadatas: [chromaMetadata],
+    });
+
+    logger.info("Memory created", {
+      id,
+      type: request.type,
+      createdBy: metadata.createdBy,
     });
 
     return {
@@ -194,16 +214,21 @@ export class ChromaDBService {
   async getMemory(id: string): Promise<Memory | null> {
     const collection = this.ensureCollection();
 
+    logger.debug("Retrieving memory", { id });
+
     const result = await collection.get({
       ids: [id],
       include: [IncludeEnum.Documents, IncludeEnum.Metadatas],
     });
 
     if (!result.ids.length || !result.documents?.[0]) {
+      logger.debug("Memory not found", { id });
       return null;
     }
 
     const chromaMetadata = result.metadatas?.[0] as Record<string, unknown>;
+
+    logger.debug("Memory retrieved", { id, type: chromaMetadata?.type });
 
     return {
       id: result.ids[0],
@@ -219,15 +244,20 @@ export class ChromaDBService {
   async deleteMemory(id: string): Promise<boolean> {
     const collection = this.ensureCollection();
 
+    logger.debug("Deleting memory", { id });
+
     // Check if the memory exists first
     const existing = await this.getMemory(id);
     if (!existing) {
+      logger.debug("Memory not found for deletion", { id });
       return false;
     }
 
     await collection.delete({
       ids: [id],
     });
+
+    logger.info("Memory deleted", { id });
 
     return true;
   }
@@ -363,6 +393,12 @@ export class ChromaDBService {
   ): Promise<Memory[]> {
     const collection = this.ensureCollection();
 
+    logger.debug("Searching memories", {
+      hasQuery: !!request.query,
+      filters: request.filters,
+      asActor: visibilityContext?.asActor,
+    });
+
     // Over-fetch when visibility filtering is applied since post-query filtering may reduce results
     const requestedLimit = request.limit || 10;
     const limit = visibilityContext ? requestedLimit * 3 : requestedLimit;
@@ -456,7 +492,15 @@ export class ChromaDBService {
     }
 
     // Trim to requested limit
-    return filteredMemories.slice(0, requestedLimit);
+    const finalResults = filteredMemories.slice(0, requestedLimit);
+
+    logger.debug("Search completed", {
+      totalFound: memories.length,
+      afterVisibilityFilter: filteredMemories.length,
+      returned: finalResults.length,
+    });
+
+    return finalResults;
   }
 
   /**
@@ -469,9 +513,12 @@ export class ChromaDBService {
   ): Promise<Memory | null> {
     const collection = this.ensureCollection();
 
+    logger.debug("Updating visibility", { id, visibility, sharedWith });
+
     // Get existing memory
     const memory = await this.getMemory(id);
     if (!memory) {
+      logger.debug("Memory not found for visibility update", { id });
       return null;
     }
 
@@ -489,6 +536,8 @@ export class ChromaDBService {
       metadatas: [chromaMetadata],
     });
 
+    logger.info("Visibility updated", { id, visibility });
+
     return {
       ...memory,
       metadata: updatedMetadata,
@@ -501,8 +550,12 @@ export class ChromaDBService {
   async healthCheck(): Promise<boolean> {
     try {
       await this.client.heartbeat();
+      logger.debug("Health check passed");
       return true;
-    } catch {
+    } catch (error) {
+      logger.warn("Health check failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   }
