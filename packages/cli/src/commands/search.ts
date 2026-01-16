@@ -5,6 +5,7 @@ import type { SearchResult } from "../services/api-client.js";
 
 export interface SearchOptions {
   query: string;
+  asActor?: string;
   type?: string;
   tags?: string;
   references?: string;
@@ -60,6 +61,7 @@ export async function searchCommand(options: SearchOptions): Promise<void> {
   try {
     const results = await apiClient.searchMemories({
       query: options.query,
+      asActor: options.asActor,
       type: options.type as "question" | "request" | "information" | undefined,
       tags,
       references,

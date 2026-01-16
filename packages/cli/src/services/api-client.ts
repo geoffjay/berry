@@ -47,6 +47,7 @@ interface ServerSearchRequest {
     };
   };
   limit?: number;
+  asActor?: string;
 }
 
 /**
@@ -78,6 +79,7 @@ export interface CreateMemoryRequest {
  */
 export interface SearchMemoriesRequest {
   query: string;
+  asActor?: string;
   type?: MemoryType;
   tags?: string[];
   references?: string[];
@@ -191,6 +193,7 @@ export class ApiClient {
       query: request.query,
       limit: request.limit,
       filters: {},
+      asActor: request.asActor,
     };
 
     if (request.type) {

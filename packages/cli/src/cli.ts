@@ -98,6 +98,11 @@ await yargs(hideBin(process.argv))
           description: "Search query",
           demandOption: true,
         })
+        .option("as-actor", {
+          alias: "a",
+          type: "string",
+          description: "Actor ID for visibility filtering (see only memories accessible to this actor)",
+        })
         .option("type", {
           alias: "t",
           type: "string",
@@ -130,6 +135,7 @@ await yargs(hideBin(process.argv))
     async (argv) => {
       await searchCommand({
         query: argv.query!,
+        asActor: argv["as-actor"],
         type: argv.type,
         tags: argv.tags,
         references: argv.references,
