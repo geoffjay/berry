@@ -1,5 +1,5 @@
-> [!WARNING]
-> Berry is in a Beta state, it's safe to use but breaking changes are possible.
+> [!CAUTION]
+> This version of `berry` has been superseded by the `berry-rs` [project][berry-rs]
 
 # Berry
 
@@ -277,3 +277,4 @@ haven't already.
 <!-- links -->
 
 [logo]: docs/assets/member.png
+[berry-rs]: https://github.com/geoffjay/berry-rs
