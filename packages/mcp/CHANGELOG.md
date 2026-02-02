@@ -1,5 +1,16 @@
 # @berry/mcp
 
+## 1.9.0
+
+### Minor Changes
+
+- [`759ed9c`](https://github.com/geoffjay/berry/commit/759ed9ca37a013f384584e0da444c9e60992dddb) Thanks [@geoffjay](https://github.com/geoffjay)! - Add structured logging to the server
+
+### Patch Changes
+
+- Updated dependencies [[`759ed9c`](https://github.com/geoffjay/berry/commit/759ed9ca37a013f384584e0da444c9e60992dddb)]:
+  - @berry/types@1.9.0
+
 ## 1.8.0
 
 ### Minor Changes
